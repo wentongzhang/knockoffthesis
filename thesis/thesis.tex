@@ -1,0 +1,149 @@
+\documentclass[12pt,reqno]{amsart}
+
+% Load custom package with options.
+\usepackage[wsectnum, wlibertine, wmarticle, wstats]{zhang-wentong_1-1}
+
+\makeatletter
+\newcommand*{\toccontents}{\@starttoc{toc}}
+\makeatother
+
+\newcommand{\indep}{\mathrel{\text{\scalebox{1.07}{$\perp\mkern-10mu\perp$}}}}
+
+\numberwithin{equation}{section}
+
+% Add more packages here if necessary.
+
+% Header, change to desired text.
+\title{Thesis: Multiple Knockoffs}
+\author{Wentong Zhang}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Background Survey}
+In hypothesis testing, the \emph{multiple comparison problem} is a problem that arises when one wishes to test numerous hypotheses simultaneously. In particular, as the number of inferences that we make increase, we should also expect the number of errors to increase; for instance, when null $p$-values are distributed uniformly between $0$ and $1$, if $1000$ null hypotheses are tested, an average of $50$ will still be rejected at the $0.05$ significance level. To provide some background, we will begin by discussing ways of controlling \emph{Type 1 error}, which may be measured via different metrics, such as the FWER or FDR. Note that although we are only bounding a measure of Type 1 error, we also care about obtaining high power in the following procedures as well.
+
+\subsection{Controlling FWER}
+When we test multiple hypotheses simultaneously, we will end up with four possible outcomes for each hypothesis:
+\begin{center}
+\begin{tabular}{c|cc|c}
+& accepted & rejected & total \\ \hline
+true & $U$ & $V$ & $n_0$ \\ 
+false & $T$ & $S$ & $n - n_0$ \\ \hline
+total & $n - R$ & $R$ & $n$
+\end{tabular}
+\end{center}
+
+Using the above table, we define the family-wise error rate.
+\begin{defn}
+The \emph{family-wise error rate}, abbreviated FWER, is
+\begin{equation}
+\on{FWER} = \mathbb{P}(V \geq  1).
+\end{equation}
+\end{defn}
+Various classical multiple comparison procedures seek to control the FWER. Two notable procedures are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.
+
+\subsection{Controlling FDR}
+In the 1990s, a new metric for error control called the \emph{false discovery rate} was introduced. This is a looser metric to use than the FWER, which refers to the probability of there being any false discoveries at all. We now define the false discovery rate below.
+\begin{defn}
+The \emph{false discovery proportion} is defined as
+\[ \on{FDP} = \frac{V}{\max(R, 1)}. \] Above, $R$ is the total number of rejections we make, while $V$ is the number of rejections of actually true hypotheses (ie. erroneous rejections). Note that $R$ is an observed value, but $V$ is not, so $\on{FDP}$ is actually an unobserved random variable. As such, we strive for control of its expectation, and define
+\[ \on{FDR} = \BE[\on{FDP}]. \]
+\end{defn}
+The question of controlling FWER versus FDR should be answered by using context for what a false discovery means in particular situations. For instance, studies regarding cheating may want to control the FWER (as false discoveries are serious false accusations), whereas studies regarding gene expresion may want to control the FDR (since discovering false connections is not as severe). 
+
+Perhaps the most well-known procedure for controlling the FDR is the Benjamini-Hochberg procedure. In \cite{bh}, Benjamini and Hochberg propose controlling the FDR rather than the FWER, and introduce a novel procedure that allows for control of the FDR.
+
+The main thing that we are interested in here is the actual procedure and is presented below; the proof can be found in the original paper, whereas a martingale proof is given in \cite{stat300}.
+\begin{theorem}
+Consider hypotheses $H_1, \ldots, H_m$ with corresponding $p$-values $P_1, \ldots, P_m$, and order them as $P_{(1)} \leq \ldots \leq P_{(m)}$. Let $q^*$ be the desired level of FDR control. Then, define
+\[ k = \max i \text{ s.t. } P_{(i)} \leq \frac{i}{m} \cdot q^{*} \] and reject all hypotheses $H_{(1)}, \ldots, H_{(k)}$. This procedure controls the FDR at level $q^*$. 
+\end{theorem}
+Note that the Benjamini-Hochberg procedure is a \emph{step-down procedure}, since the selected $k$ is a maximum index, rather than a minimum.
+
+
+\subsection{Introducing (Model-X) Knockoffs}
+Recently, Barber and Cand\`{e}s have proposed a new procedure that also controls the FDR for linear Gaussian models in \cite{knockoffs}. The procedure, known as the \emph{knockoff filter}, creates ``knockoff'' variables, which have the same covariance structure as the covariates, but are independent of the output, and uses these variables to control the false discovery rate. \cite{panning} then provided a sweeping generalization of the procedure beyond linear models.
+
+\todo[inline,size=\tiny]{not sure how much detail should be given to the background on knockoffs: should just cite the paper and move on?}
+
+\section{Multiple Knockoffs}
+The concept of multiple knockoffs is a direct extension of the work done in \cite{knockoffs} and \cite{panning}. We define multiple model-X knockoffs as follows. First, recall the definition of a null covariate.
+\begin{defn}
+A variable $X_j$ is said to be ``null'' if and only if $Y$ is independent of $X_j$ conditionally on the other variables $X_{-j} = \{ X_1, \ldots, X_p \} \setminus \{ X_j\}$. The subset of null variables is denoted by $\mathcal{H}_0$ and we call a variable $X_j$ ``non-null''or relevant if $j \not \in \mathcal{H}_0$.
+\end{defn}
+\begin{defn}
+Multiple model-X knockoffs for a family of random variables $X = (X_1, \ldots, X_p)$ are a collection of $n$ families of new random variables $X^{(i)} = (X^{(i)}_1, \ldots X^{(i)}_p)$ constructed satisfying the following two properties, analogous to those of knockoffs: (1) \emph{Exchangeability.} Let $[[n]]$ denote the set $\{ 0, \ldots, n \}$. For each $1 \leq j \leq p$, let $\sigma_j : [[n]] \to [[n]]$ be any permutation of the indices $0$ to $n$. Then, letting $X^{(0)} = X$,
+\begin{equation}
+(X^{(0)}, \ldots, X^{(n)}) \overset{d}= (X^{(\sigma_1(0))}_{1}, \ldots, X^{(\sigma_p(0))}_{p}, \ldots, X^{(\sigma_1(n))}_{1}, \ldots, X^{(\sigma_p(n))}_{p}  )
+\end{equation}
+For convenience, we write
+\begin{equation}
+\{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right) \overset{\on{def}}{=} (X^{(\sigma_1(0))}_{1}, \ldots, X^{(\sigma_p(0))}_{p}, \ldots, X^{(\sigma_1(n))}_{1}, \ldots, X^{(\sigma_p(n))}_{p}  ).
+\end{equation}
+(2) \emph{Conditional Independence.} $(X^{(1)}, \ldots, X^{(n)}) \indep Y \mid X$ if there is a response variable $Y$. This property is guaranteed if the $X^{(i)}$ are constructed without looking at $Y$.
+\end{defn}
+Here, the two conditions are analogous to the ones presented in Definition 3.1 of \cite{panning}. In fact, the second condition is identical, while the first only seeks to generalize the idea of pairwise exchangeability.
+
+\subsection{Exchangeability of Null Covariates and Knockoffs}
+First, we provide a generalization of Lemma 3.2 in \cite{panning}. In particular, we extend the proof that we can permute null covariates with their knockoffs without changing the joint distribution of $X$ and the knockoffs $X^{(i)}$, conditional on $Y$.
+\todo[inline]{omitted detail with rows, add in here?}
+\begin{lem}
+\label{lemma3.2}
+Let $S \subseteq \mathcal{H}_0$ be a subset of nulls. Consider a set of permutations $\sigma_j : [[ n ]] \to [[ n ]]$ such that if $j \not \in S$, then $\sigma_j = \on{id}_{[[ n ]]}$. Then,
+\[(X^{(0)}, \ldots, X^{(n)}) \mid Y \overset{d}= \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right) \mid Y. \]
+\end{lem}
+\begin{proof}
+The proof is quite similar to that of the original lemma. Without loss of generality, we can assume that $S = \{ 1, \ldots, m \}$. Then, since the marginal distribution of $Y$ is the same on both sides of the equation, it is equivalent to show that the joint distributions are the same. Then, in the same way as the original lemma, by the exchangeability condition that \[ (X^{(0)}, \ldots, X^{(n)}) \overset{d}= \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right),\] so the only thing we need to show is that 
+\begin{equation}
+Y \mid (X^{(0)}, \ldots, X^{(n)}) \overset{d}= Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right).
+\end{equation}
+To see this, let $p_{Y \mid X}(y|x)$ be the conditional distribution of $Y$ given $X$. Then, note that
+\begin{align*}
+p_{Y \mid \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right)}(y | (x^{(0)}, \ldots , x^{(n)})) &= p_{Y \mid (X^{(0)}, \ldots, X^{(n)})} (y| \{ \sigma_i\inv \}_{i=1}^p (x^{(0)}, \ldots, x^{(n)}) ) \\
+&= p_{Y \mid X^{(0)}} (y| x'),
+\end{align*}
+where $x_i' = x^{(\sigma_i\inv(0))}_i$ if $i \in S$ and $x_i' = x_i$ otherwise. In particular, the second equality above comes from the fact that $Y$ is conditionally independent of the knockoffs $(X^{(1)}, \ldots, X^{(n)})$ given $X$ by definition of multiple knockoffs.
+
+Next, note that we assumed earlier that $S = \{ 1, \ldots, m \}$ is the subset of nulls. Then, by definition, $Y$ and $X_1$ will be conditionally independent given $X_{2 : p}$, we may further simplify that
+\begin{align*}
+p_{Y \mid X^{(0)}} (y| x') &= p_{Y \mid X^{(0)}_{1 : p}} (y | x^{(\sigma_1\inv(0))}_1, x'_{2 : p}) = p_{Y \mid X^{(0)}_{2 : p}} (y | x'_{2 : p}) = p_{Y \mid X^{(0)}_{1 : p}} (y | x_1^{(0)}, x'_{2 : p})
+\end{align*}
+This shows that the conditional distributions of $Y$ are the same:
+\[ Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right) = Y \mid \{ \sigma_i' \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right), \] where $\sigma_1' = \on{id}_{[[n]]}$ and $\sigma_i' = \sigma_i$ for $i  > 1$. This reduces $S$ to the case where $1 \not \in S$, so we may repeat this argument until $S$ is empty, and this proves the claim.
+\end{proof}
+
+\subsection{Feature Statistics and \texorpdfstring{$p$}{p}-values}
+In the original work on knockoffs, statistics denoted $W_j$ are computed for each of the $X_j$ based on both $X_j$ and its knockoff, where a large value of $W_j$ indicates evidence for significance of the covariate. Furthermore, we require $W_j$ to satisfy the flip-sign property, which says that swapping $X_j$ with its knockoff has the effect of reversing the sing of $W_j$. These statistics are then used in a sequential process when running the knockoffs procedure.
+
+Returning to multiple knockoffs, it is not immediately clear how to generalize the concept of the statistic $W_j$. However, we may refer to the original knockoffs paper \cite{knockoffs} and view the knockoffs procedure as a sequential selection procedure. In particular, a key idea in the proof of the main theorems, Theorem 1 and Theorem 2, in \cite{knockoffs} is the conversion of $W_j$ to $1$-bit $p$-values: covariates such that $W_j > 0$ are assigned a $p$-value of $0.5$, whereas the covariates such that $W_j < 0$ are given a $p$-value of $1$. This conversion allows us to prove the desired statements via Theorem 3 of \cite{knockoffs}, which provides proof of control of FDR for generalized sequential testing procedures, the FSTP and SSTP. Now, one thing to note here is that the $W_j$ statistics for both the covariate and its knockoff are in correspondence with generating statistics $Z_j$ and $\tilde{Z_j}$ for the covariate and its knockoff respectively via the formula
+\begin{equation}
+W_j = f_j(Z_j, \tilde{Z_j})
+\end{equation}
+where $f_j$ is an anti-symmetric function. 
+
+In the case of multiple knockoffs, instead of thinking about $W_j$, we will consider $Z_j^{(i)}$ for each knockoff $i$ and retaining the convention that the case of $i = 0$ is the statistic corresponding to the original covariate. As such, we can generalize the definition of the statistic $T$ to become
+\begin{equation}
+T \overset{\on{def}}{=} (Z^{(0)},\ldots, Z^{(n)}) = t([X^{(0)}, \ldots, X^{(n)}], y)
+\end{equation}
+Here, the $Z^{(k)}_j$ are intended to measure the significance of the covariate (or knockoff) $X^{(k})_j$. Now, we present a lemma which is the desired generalization of Lemma 3.3 in \cite{panning}.
+\begin{lem}
+For the null $X_j$, where $j \in \mathcal{H}_0$, let $A_{j, (i)}$ denote the $i$-th order statistic of $Z_j^{(0)}, \ldots, Z_j^{(n)}$. Then
+\begin{equation}
+\mathbb{P}\left(Z_j^{(0)} = A_{j, (i)} \right) = \frac{1}{n+1}, \qquad 1 \leq i \leq n + 1.
+\end{equation}
+\end{lem}
+\begin{proof}
+\todo[inline]{not sure if there is more to flesh out here, seems pretty analogous to previous work, but am having trouble formalizing for some reason}
+This is a direct consequence of \hyperref[lemma3.2]{\Cref{lemma3.2}}, from which we may deduce that $T \overset{\Delta}{=} \{ \sigma_i \}_{i=1}^p \left( T \right)$ where the $\sigma_i$ satisfy the condition of the lemma (ie. are non-trivial only for null $j$). Then, by symmetry, the statistic $Z_j^{(0)}$ must be equally likely to be $i$-th largest statistic among the $Z_j^{(i)}$, as desired.
+\end{proof}
+
+
+\bibliographystyle{alpha}
+\bibliography{sources}
+
+\end{document}
