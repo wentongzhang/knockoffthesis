@@ -1,7 +1,9 @@
-\documentclass[12pt,reqno]{amsart}
+\documentclass[12pt,reqno]{report}
 
 % Load custom package with options.
 \usepackage[wsectnum, wlibertine, wmarticle, wstats]{zhang-wentong_1-1}
+
+\graphicspath{{images/}}
 
 \makeatletter
 \newcommand*{\toccontents}{\@starttoc{toc}}
@@ -14,20 +16,40 @@
 % Add more packages here if necessary.
 
 % Header, change to desired text.
-\title{Thesis: Multiple Knockoffs}
-\author{Wentong Zhang}
-\date{\today}
+\title{
+	{\Huge \bf Multiple Knockoffs}\\ \vspace*{1cm}
+	{\includegraphics[scale=0.3]{university.png}} \\
+	{\huge Wentong Zhang \\ \LARGE Harvard College}\\ \vspace*{1cm}
+	{\Large \it Submitted in partial fulfillment of the
+requirements for the degree of Bachelor
+of Arts with Honors in Statistics
+April 2018}
+}
+\date{\Large April 1, 2018}
 
 \begin{document}
 
 \maketitle
 
+\chapter*{Abstract}
+In this thesis, we present an extension of the knockoffs procedure in multiple testing. In particular, extending the work done on model-X knockoffs, we investigate the effects of generating numerous knockoffs simultaneously. 
+
+\chapter*{Acknowledgements}
+\todo{fill this in}
+
+% \chapter*{Dedication}
+
+% \chapter*{Declaration}
+
+\doublespacing
 \tableofcontents
+\onehalfspacing
 
-\section{Background Survey}
-In hypothesis testing, the \emph{multiple comparison problem} is a problem that arises when one wishes to test numerous hypotheses simultaneously. In particular, as the number of inferences that we make increase, we should also expect the number of errors to increase; for instance, when null $p$-values are distributed uniformly between $0$ and $1$, if $1000$ null hypotheses are tested, an average of $50$ will still be rejected at the $0.05$ significance level. To provide some background, we will begin by discussing ways of controlling \emph{Type 1 error}, which may be measured via different metrics, such as the FWER or FDR. Note that although we are only bounding a measure of Type 1 error, we also care about obtaining high power in the following procedures as well.
+\chapter{An Overview of Multiple Comparison Procedures}
+\todo[inline]{a history of multiple testing?}
 
-\subsection{Controlling FWER}
+In hypothesis testing, the \emph{multiple comparison problem} is a problem that arises when one wishes to test numerous hypotheses simultaneously. At times, we may wish to test the \emph{global null}, or test the hypothesis that all of the individual null hypotheses are true. On the other hand, often we care about each individual hypothesis; we wish to accept or reject each hypothesis. In this case, as the number of inferences that we make increase, we should also expect the number of errors to increase; for instance, when null $p$-values are distributed uniformly between $0$ and $1$, if $1000$ null hypotheses are tested, an average of $50$ will still be rejected at the $0.05$ significance level.
+
 When we test multiple hypotheses simultaneously, we will end up with four possible outcomes for each hypothesis:
 \begin{center}
 \begin{tabular}{c|cc|c}
@@ -37,41 +59,50 @@ false & $T$ & $S$ & $n - n_0$ \\ \hline
 total & $n - R$ & $R$ & $n$
 \end{tabular}
 \end{center}
+In the table above, note that the quantities $R$ and $n_0$ are observed, but $U,V,T,S$ are actual unobserved random variables. \emph{Type 1 error} is concerned with the quantity $V$, which is the number of null hypotheses that are incorrectly rejected, and will be what we wish to control under various metrics. Note that although we are only bounding a measure of Type 1 error, we also care about obtaining high power in the following procedures.
 
-Using the above table, we define the family-wise error rate.
+\subsection{Family-Wise Error Rate}
 \begin{defn}
 The \emph{family-wise error rate}, abbreviated FWER, is
 \begin{equation}
-\on{FWER} = \mathbb{P}(V \geq  1).
+\on{FWER} = \mathbb{P}(V \geq  1)
 \end{equation}
+where $V$ is the number of erroneous rejections of null hypotheses.
 \end{defn}
-Various classical multiple comparison procedures seek to control the FWER. Two notable procedures are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.
+Note that bounding the FWER can be a rather stringent constraint on a procedure, as the procedure must then control the probability of any false rejections at all. Two notable procedures that control the FWER are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.\todo{provide detailed explanation of holm and hochberg}
 
-\subsection{Controlling FDR}
-In the 1990s, a new metric for error control called the \emph{false discovery rate} was introduced. This is a looser metric to use than the FWER, which refers to the probability of there being any false discoveries at all. We now define the false discovery rate below.
+\subsection{Controlling FDR} 
+In the 1990s, a new metric for error control called the \emph{false discovery rate} (FDR) was introduced. Colloquially, the FDR is a more relaxed metric to use than the FWER, which refers to the probability of there being any false discoveries at all.
 \begin{defn}
 The \emph{false discovery proportion} is defined as
-\[ \on{FDP} = \frac{V}{\max(R, 1)}. \] Above, $R$ is the total number of rejections we make, while $V$ is the number of rejections of actually true hypotheses (ie. erroneous rejections). Note that $R$ is an observed value, but $V$ is not, so $\on{FDP}$ is actually an unobserved random variable. As such, we strive for control of its expectation, and define
-\[ \on{FDR} = \BE[\on{FDP}]. \]
+\begin{equation}
+\on{FDP} = \frac{V}{\max(R, 1)}
+\end{equation}
+where $R$ is the total number of rejections we make, while $V$ is the number of rejections of null hypotheses (ie. erroneous rejections). Note that $R$ is an observed value, but $V$ is not, so the $\on{FDP}$ is actually an unobserved random variable. As such, we strive for control of its expectation, and define
+\begin{equation}
+\on{FDR} = \BE[\on{FDP}].
+\end{equation}
+
 \end{defn}
-The question of controlling FWER versus FDR should be answered by using context for what a false discovery means in particular situations. For instance, studies regarding cheating may want to control the FWER (as false discoveries are serious false accusations), whereas studies regarding gene expresion may want to control the FDR (since discovering false connections is not as severe). 
+The question of controlling FWER versus FDR should be answered by using context for what a false discovery means in particular situations. For instance, studies regarding cheating may want to control the FWER (as false discoveries are serious false accusations), whereas studies regarding gene expresion may want to control the FDR (since the consequences of discovering false connections are likely not as severe). 
 
-Perhaps the most well-known procedure for controlling the FDR is the Benjamini-Hochberg procedure. In \cite{bh}, Benjamini and Hochberg propose controlling the FDR rather than the FWER, and introduce a novel procedure that allows for control of the FDR.
-
-The main thing that we are interested in here is the actual procedure and is presented below; the proof can be found in the original paper, whereas a martingale proof is given in \cite{stat300}.
+The most well-known procedure for controlling the FDR is the Benjamini-Hochberg procedure. In \cite{bh}, Benjamini and Hochberg proposde control the FDR in lieu of the FWER, and introduced the following procedure that controls the FDR.
 \begin{theorem}
 Consider hypotheses $H_1, \ldots, H_m$ with corresponding $p$-values $P_1, \ldots, P_m$, and order them as $P_{(1)} \leq \ldots \leq P_{(m)}$. Let $q^*$ be the desired level of FDR control. Then, define
 \[ k = \max i \text{ s.t. } P_{(i)} \leq \frac{i}{m} \cdot q^{*} \] and reject all hypotheses $H_{(1)}, \ldots, H_{(k)}$. This procedure controls the FDR at level $q^*$. 
 \end{theorem}
-Note that the Benjamini-Hochberg procedure is a \emph{step-down procedure}, since the selected $k$ is a maximum index, rather than a minimum.
+The main thing that we are interested in here is the actual procedure and is presented below; the proof can be found in the original paper, whereas a martingale proof is given in \cite{stat300}.
 
 
-\subsection{Introducing (Model-X) Knockoffs}
+Note that the Benjamini-Hochberg procedure is a \emph{step-down procedure}, since the selected $k$ is a maximum index, rather than a minimum. \todo{provide greater exposition of BH procedure}
+
+
+\chapter{Introducing (Model-X) Knockoffs}
 Recently, Barber and Cand\`{e}s have proposed a new procedure that also controls the FDR for linear Gaussian models in \cite{knockoffs}. The procedure, known as the \emph{knockoff filter}, creates ``knockoff'' variables, which have the same covariance structure as the covariates, but are independent of the output, and uses these variables to control the false discovery rate. \cite{panning} then provided a sweeping generalization of the procedure beyond linear models.
 
 \todo[inline,size=\tiny]{not sure how much detail should be given to the background on knockoffs: should just cite the paper and move on?}
 
-\section{Multiple Knockoffs}
+\chapter{Multiple Knockoffs}
 The concept of multiple knockoffs is a direct extension of the work done in \cite{knockoffs} and \cite{panning}. We define multiple model-X knockoffs as follows. First, recall the definition of a null covariate.
 \begin{defn}
 A variable $X_j$ is said to be ``null'' if and only if $Y$ is independent of $X_j$ conditionally on the other variables $X_{-j} = \{ X_1, \ldots, X_p \} \setminus \{ X_j\}$. The subset of null variables is denoted by $\mathcal{H}_0$ and we call a variable $X_j$ ``non-null''or relevant if $j \not \in \mathcal{H}_0$.
@@ -89,11 +120,11 @@ For convenience, we write
 \end{defn}
 Here, the two conditions are analogous to the ones presented in Definition 3.1 of \cite{panning}. In fact, the second condition is identical, while the first only seeks to generalize the idea of pairwise exchangeability.
 
-\subsection{Exchangeability of Null Covariates and Knockoffs}
+\section{Exchangeability of Null Covariates and Knockoffs}
 First, we provide a generalization of Lemma 3.2 in \cite{panning}. In particular, we extend the proof that we can permute null covariates with their knockoffs without changing the joint distribution of $X$ and the knockoffs $X^{(i)}$, conditional on $Y$.
 \todo[inline]{omitted detail with rows, add in here?}
 \begin{lem}
-\label{lemma3.2}
+\label{lemma2.3}
 Let $S \subseteq \mathcal{H}_0$ be a subset of nulls. Consider a set of permutations $\sigma_j : [[ n ]] \to [[ n ]]$ such that if $j \not \in S$, then $\sigma_j = \on{id}_{[[ n ]]}$. Then,
 \[(X^{(0)}, \ldots, X^{(n)}) \mid Y \overset{d}= \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right) \mid Y. \]
 \end{lem}
@@ -117,10 +148,12 @@ This shows that the conditional distributions of $Y$ are the same:
 \[ Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right) = Y \mid \{ \sigma_i' \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right), \] where $\sigma_1' = \on{id}_{[[n]]}$ and $\sigma_i' = \sigma_i$ for $i  > 1$. This reduces $S$ to the case where $1 \not \in S$, so we may repeat this argument until $S$ is empty, and this proves the claim.
 \end{proof}
 
-\subsection{Feature Statistics and \texorpdfstring{$p$}{p}-values}
-In the original work on knockoffs, statistics denoted $W_j$ are computed for each of the $X_j$ based on both $X_j$ and its knockoff, where a large value of $W_j$ indicates evidence for significance of the covariate. Furthermore, we require $W_j$ to satisfy the flip-sign property, which says that swapping $X_j$ with its knockoff has the effect of reversing the sing of $W_j$. These statistics are then used in a sequential process when running the knockoffs procedure.
+\section{Feature Statistics and \texorpdfstring{$p$}{p}-values}
+In the original work on knockoffs, statistics denoted $W_j$ are computed for each of the $X_j$ based on both $X_j$ and its knockoff, where a large value of $W_j$ indicates evidence for significance of the covariate. Furthermore, $W_j$ is required to satisfy the flip-sign property, which says that swapping $X_j$ with its knockoff has the effect of reversing the sign of $W_j$. These statistics are then used in a sequential process when running the knockoffs procedure.
 
-Returning to multiple knockoffs, it is not immediately clear how to generalize the concept of the statistic $W_j$. However, we may refer to the original knockoffs paper \cite{knockoffs} and view the knockoffs procedure as a sequential selection procedure. In particular, a key idea in the proof of the main theorems, Theorem 1 and Theorem 2, in \cite{knockoffs} is the conversion of $W_j$ to $1$-bit $p$-values: covariates such that $W_j > 0$ are assigned a $p$-value of $0.5$, whereas the covariates such that $W_j < 0$ are given a $p$-value of $1$. This conversion allows us to prove the desired statements via Theorem 3 of \cite{knockoffs}, which provides proof of control of FDR for generalized sequential testing procedures, the FSTP and SSTP. Now, one thing to note here is that the $W_j$ statistics for both the covariate and its knockoff are in correspondence with generating statistics $Z_j$ and $\tilde{Z_j}$ for the covariate and its knockoff respectively via the formula
+Returning to multiple knockoffs, we now wish to generalize the concept of the statistic $W_j$. To be informal, there are two properties of $W_j$ that are critical to the knockoffs procedure: the sign of $W_j$, which determines the $p$-value that is used in the selection process, and the magnitude of $|W_j|$, which determines the ordering of the $W_j$ in the selection process. As such, to generalize to multiple knockoffs, we just need to ensure that we have generalizations of the ideas of obtaining a $p$-value from our statistic and obtaining a magnitude of our statistic. 
+
+To be more precise, we may refer to the original knockoffs paper \cite{knockoffs} and view the knockoffs procedure as a sequential selection procedure. A key idea in the proof of the main theorems, Theorem 1 and Theorem 2, in \cite{knockoffs} is the conversion of the sign of $W_j$ to $1$-bit $p$-values: covariates such that $W_j > 0$ are assigned a $p$-value of $0.5$, whereas the covariates such that $W_j < 0$ are given a $p$-value of $1$. This conversion allows us to prove the desired statements via Theorem 3 of \cite{knockoffs}, which provides proof of control of FDR for generalized sequential testing procedures, the FSTP and SSTP. Note here that the $W_j$ statistics for both the covariate and its knockoff are in correspondence with generating statistics $Z_j$ and $\tilde{Z_j}$ for the covariate and its knockoff respectively via the formula
 \begin{equation}
 W_j = f_j(Z_j, \tilde{Z_j})
 \end{equation}
@@ -130,18 +163,45 @@ In the case of multiple knockoffs, instead of thinking about $W_j$, we will cons
 \begin{equation}
 T \overset{\on{def}}{=} (Z^{(0)},\ldots, Z^{(n)}) = t([X^{(0)}, \ldots, X^{(n)}], y)
 \end{equation}
-Here, the $Z^{(k)}_j$ are intended to measure the significance of the covariate (or knockoff) $X^{(k})_j$. Now, we present a lemma which is the desired generalization of Lemma 3.3 in \cite{panning}.
+Here, the $Z^{(k)}_j$ are intended to measure the significance of the covariate (or knockoff) $X^{(k})_j$. 
+
+Now, we must consider the other critical component to the knockoff procedure: the magnitude of $W_j$, which determines the order in which we look at the covariates in the sequential selection procedure. Here, similar to the choice of anti-symmetric function we make for $f_j(Z_j, \tilde{Z}_j) = W_j$ in the original knockoffs case, a choice must be made to determine the ``magnitude'' of the statistic, denoted $M_j$, which can also write as $g_j(Z^{(0)}_j,\ldots, Z^{(n)_j})$. In addition, noting that $f_j$ is anti-symmetric in the original case, we will require that $g_j$ is a symmetric function in its arguments (the analog here is that the magnitude of $f_j$ would be symmetric). 
+
+
+Now, we present a lemma which is the desired generalization of Lemma 3.3 in \cite{panning}.
 \begin{lem}
-For the null $X_j$, where $j \in \mathcal{H}_0$, let $A_{j, (i)}$ denote the $i$-th order statistic of $Z_j^{(0)}, \ldots, Z_j^{(n)}$. Then
+\label{lemma2.4}
+For the null $X_j$, where $j \in \mathcal{H}_0$, let $A_{j, (i)}$ denote the $i$-th order statistic of $Z_j^{(0)}, \ldots, Z_j^{(n)}$. Then, conditional on $(M_1, \ldots, M_p)$,
 \begin{equation}
 \mathbb{P}\left(Z_j^{(0)} = A_{j, (i)} \right) = \frac{1}{n+1}, \qquad 1 \leq i \leq n + 1.
 \end{equation}
 \end{lem}
 \begin{proof}
-\todo[inline]{not sure if there is more to flesh out here, seems pretty analogous to previous work, but am having trouble formalizing for some reason}
-This is a direct consequence of \hyperref[lemma3.2]{\Cref{lemma3.2}}, from which we may deduce that $T \overset{\Delta}{=} \{ \sigma_i \}_{i=1}^p \left( T \right)$ where the $\sigma_i$ satisfy the condition of the lemma (ie. are non-trivial only for null $j$). Then, by symmetry, the statistic $Z_j^{(0)}$ must be equally likely to be $i$-th largest statistic among the $Z_j^{(i)}$, as desired.
+\todo[inline]{slightly confused here}
+Like Lemma 3.3 in \cite{panning}, this is a direct consequence of \hyperref[lemma2.3]{\Cref{lemma2.3}}, and we will provide an analogous proof. From the lemma, we may deduce that $T \overset{d}{=} \{ \sigma_i \}_{i=1}^p \left( T \right)$ where the $\sigma_i$ satisfy the condition of the lemma (ie. are non-trivial only for null $j$). Then, by symmetry, the statistic $Z_j^{(0)}$ must be equally likely to be $i$-th largest statistic among the $Z_j^{(i)}$, as desired.
 \end{proof}
+The above lemma allows us to obtain the analogous version of $p$-values for multiple knockoffs. Using the same notation as in \hyperref[lemma2.4]{\Cref{lemma2.4}} for the covariate $X_j$, we define the $p$-value
+\begin{equation}
+p_j = 1 - \frac{i - 1}{n+1}, \qquad Z_j^{(0)} = A_{j, (i)}.
+\end{equation}
+Note that the special case where $n = 1$ simplifies directly into the original knockoffs framework.
 
+\section{The Procedure}
+Now that we have developed the analog of the desired test statistic in the setting of multiple knockoffs, we may briefly describe the procedure itself. The parallel here is rather direct, and is simply using the machinery that we have developed in the framework of \cite{knockoffs} under the FSTP and SSTP described there. We will present these results in a similar fashion to \cite{panning}.
+\begin{theorem}
+Fix a threshold $c \in (0,1)$. Then, choose a threshold $\tau > 0$ by setting
+\[ \tau = \min \left\{ t > 0 : \frac{\# \{ j : M_j \geq t, p_j > c \}}{\# \{ j : M_j \geq t, p_j \leq c \}} \leq q \right\} \qquad \textbf{(MultipleKnockoffs)} \] where $q$ is the target FDR level (or $\tau = + \infty$ if the set above is empty). Then, the procedure that selects the variables
+\[ \hat{S} = \{ j : M_j \geq t, p_j \leq c \} \] controls the modified FDR defined as
+\[ \on{mFDR} = \BE\left[ \frac{|\{ j \in \hat{S} \cap \mathcal{H}_0 \}|}{|\hat{S}|+ 1 / q} \right] \leq q. \] Similarly, the more conservative procedure given by choosing the threshold $\tau_+ > 0$ where
+\[ \tau_+ = \min \left\{ t > 0 : \frac{1 + \# \{ j : M_j \geq t, p_j > c \}}{\# \{ j : M_j \geq t, p_j \leq c \}} \leq q \right\} \qquad \textbf{(MultipleKnockoffs+)} \] and setting $\hat{S} = \{ j : M_j \geq t, p_j \leq c \}$ controls the usual FDR by
+\[ \BE\left[ \frac{|\{ j \in \hat{S} \cap \mathcal{H}_0 \}|}{|\hat{S}| \vee 1} \right] \leq q. \]
+\end{theorem}
+\begin{proof}
+The proof of the theorem above follows from Theorem 3 of \cite{knockoffs}. In particular, the connection with knockoffs in Section 5.2 of \cite{knockoffs} explains the connection between knockoffs and the SSTP. Here, the connection is even more explicit: we replace $|W_j|$ with $M_j$, and store the information of the $p$-values directly. In particular, from the work that we have done, it is evident that $p_j \geq \Unif[0,1]$, and we assume that they are independent from the non-null $p$-values. Finally, note that we are doing something analogous to ordering our covariates in order of decreasing $M_j$ in the procedure by looking at cutoffs for $M_j$. Hence, it is clear that the procedure outlined above is a special case of the SSTP, and we are done.
+\end{proof}
+A noteworthy difference between multiple knockoffs and knockoffs is the addition of the cutoff parameter $c$ for $p$-values. Indeed, since knockoffs only using extremely rough 1-bit $p$-values, a choice for $c$ in the SSTP is not particularly enlightening. In particular, selecting any $c \in (1/2, 1)$ is strictly worse than selecting $c = 1/2$, whereas selecting $c \in (0, 1/2)$ leads to zero power; it is evident that the choice $c = 1/2$ is optimal.
+
+For multiple knockoffs, however, there is no canonical choice for $c$ in the SSTP description. For instance, consider the case where $n = 2$. Then, two candidates for $c$ exist: $1/3$ and $2/3$ are both possible. Later, we will investigate the effects of choosing different $c$ on the power of the procedure in various situations for different $n$. 
 
 \bibliographystyle{alpha}
 \bibliography{sources}
