@@ -13,6 +13,9 @@
 \makeatother
 
 \newcommand{\indep}{\mathrel{\text{\scalebox{1.07}{$\perp\mkern-10mu\perp$}}}}
+\nc{\BP}{\mathbb{P}}
+\nc{\FWER}{\on{FWER}}
+\nc{\FDR}{\on{FDR}}
 
 \numberwithin{equation}{section}
 
@@ -46,7 +49,8 @@ In this thesis, we present an extension of the knockoffs procedure in multiple t
 
 \doublespacing
 \tableofcontents
-\onehalfspacing
+% \onehalfspacing
+\singlespacing
 
 \chapter{An Introduction to Multiple Comparison Procedures}
 \label{chapter1}
@@ -61,11 +65,9 @@ false & $T$ & $S$ & $n - n_0$ \\ \hline
 total & $n - R$ & $R$ & $n$
 \end{tabular}
 \end{center}
-In the table above, note that the quantities $R$ and $n_0$ are observed, but $U,V,T,S$ are actual unobserved random variables. \emph{Type I error} is concerned with the quantity $V$, which is the number of null hypotheses that are incorrectly rejected, and will be what we wish to control under various metrics. Note that although we will be providing bounds on measures of Type I error, power will ultimately become the metric by which we wish to judge our procedures, as we will seek to maximize power of a procedure given a bound on Type I error. A good example of this can be seen by examining the Bonferroni correction, the Holms procedure, and the Hochberg procedure: for the same control on the \emph{family-wise error rate}, the Hochberg procedure is more powerful than the Holms procedure (which is more powerful than the Bonferroni correction).
-
-\section{Family-Wise Error Rate}
-To begin, we will introduce a metric of Type I error called the \emph{family-wise error rate}.
-\subsection{Definition}
+In the table above, note that the quantities $R$ and $n_0$ are observed, but $U,V,T,S$ are actual unobserved random variables. \emph{Type I error} is concerned with the quantity $V$, which is the number of null hypotheses that are incorrectly rejected, and will be what we wish to control under various metrics. Note that although we will be providing bounds on measures of Type I error, power will ultimately become the metric by which we wish to judge our procedures, as we will seek to maximize power of a procedure given a bound on Type I error.
+\section{The Family-Wise Error Rate}
+In this section, we will first develop background on some classical procedures that control a measure of Type I error called the \emph{family-wise error rate}. In doing so, we will see that for the same control on the \emph{family-wise error rate}, the Hochberg procedure is more powerful than the Holms procedure (which is more powerful than the Bonferroni correction). To begin, we will the \emph{family-wise error rate} as follows.
 \begin{defn}
 The \emph{family-wise error rate}, abbreviated FWER, is defined as
 \begin{equation}
@@ -73,10 +75,10 @@ The \emph{family-wise error rate}, abbreviated FWER, is defined as
 \end{equation}
 where $V$ is the number of erroneous rejections of null hypotheses.
 \end{defn}
-Note that bounding the FWER can be a rather stringent constraint on a procedure, as the procedure must then control the probability of any false rejections at all. \todo{say a bit more about the FWER here}
+Note that bounding the FWER can be a rather stringent constraint on a procedure, as the procedure must then control the probability of any false rejections at all.
 
 \subsection{The Bonferroni Correction}
-One of the earliest methods presented in controlling the FWER is known as the \emph{Bonferroni correction} (alternatively the Bonferroni method). First used in \cite{dunn}, this procedure draws its name from the Bonferroni inequalities, which are used in the proof of its control of the FWER.
+One of the earliest methods presented in controlling the FWER is known as the \emph{Bonferroni correction} (alternatively the Bonferroni method). First used in \cite{dunn} in 1959, this procedure draws its name from the Bonferroni inequalities, which are used in the proof of its control of the FWER.
 \begin{proc}[Bonferroni Correction]
 \label{bonfcorr}
 Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ldots, H_{0, n}$, with associated $p$-values denoted $p_1, \ldots, p_n$ respectively. Fix a desired level $\alpha$. Then, reject all hypotheses $H_{0, i}$ for which
@@ -88,14 +90,46 @@ p_i \leq \alpha / n.
 \Cref{bonfcorr} controls the FWER at level $\alpha$.
 \end{prop}
 \begin{proof}
-stuff
+The proof of FWER control is a simple application of the union bound (or Bonferroni inequalities). In particular, without loss of generality, assume that $H_{0,i}$ for $i \leq n_0$ are the only true null hypotheses (where $n_0 \leq n$). Then, the FWER may be bounded, as desired, by
+\begin{equation}
+\FWER = \BP(V \geq 1) = \BP \left[ \bigcup_{i=1}^{n_0} \left( p_i \leq \frac{\alpha}{n} \right) \right] \leq \sum_{i=1}^{n_0} \BP\left( p_i \leq \frac{\alpha}{n}  \right) = n_0 \cdot \frac{\alpha}{n} \leq \alpha.
+\end{equation}
 \end{proof}
+The Bonferroni correction controls the FWER at level $\alpha$, but the cost in power can be quite severe. Consider a concrete example: suppose we have $1000$ null hypotheses that we wish to test at the $\alpha = 0.05$ level. In this case, we would only reject the hypotheses for which the $p$-values are less than $5 \times 10^{-5}$, or extremely significant $p$-values. As such, this test may be most suitable for situations in which we expect certain $p$-values to be extremely significant, as otherwise, it is possible that the Bonferroni procedure yields very low power.
+
+\subsection{Holm's Procedure}
+Another procedure that controls the FWER in multiple hypothesis testing is Holm's procedure. Previously, we saw that \Cref{bonfcorr} successfully controlled the FWER at level $\alpha$ for tests at level $\alpha$, but a simple numerical example illustrates how restrictive the Bonferroni procedure can be, in particular when considering a large number of hypotheses. Holm's procedure, introduced in \cite{holms}, provides less strict criteria for rejecting the null hypotheses, and hence will have uniformly more power. The procedure is as follows.
+\begin{proc}[Holm's Procedure]
+\label{holmproc}
+Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ldots, H_{0, n}$, with associated $p$-values denoted $p_1, \ldots, p_n$ respectively. Fix a desired level $\alpha$. Then, order the $p$-values so that
+\[ p_{(1)} \leq p_{(2)} \leq \cdots \leq p_{(n)} \] and let $H_{(1)}, \ldots, H_{(n)}$ be the corresponding hypotheses. Then, define
+\[ k = \min \left\{ 1 \leq i \leq n : p_{(i)} > \frac{\alpha}{n - i + 1} \right \}  \] and reject hypotheses $H_{(1)}, \ldots H_{(k-1)}$. In particular, if it is the case that 
+\[ p_{(i)} \leq \frac{\alpha}{n - i + 1}, \qquad \forall 1 \leq i \leq n, \] then we reject all $H_1, \ldots, H_n$.
+\end{proc}
+\begin{rmk}
+A seqeuntial way to think about Holm's procedure is as follows. We begin by considering $p_{(1)}$: if $p_{(1)} \leq \alpha / n$, then reject $H_{(1)}$ and continue to $p_{(2)}$. Then, for each $p_{(i)}$, reject $H_{(i)}$ if $p_{(i)} \leq \alpha / (n - i + 1)$, and continue to $p_{(i+1)}$; otherwise, end the procedure.
+\end{rmk}
+From the sequential view of Holm's procedure, it now becomes evident that Holm's procedure is uniformly more powerful than Bonferroni's procedure as follows. We can translate Bonferroni's procedure into a sequential procedure as well: we may order the $p$-values in order, and sequentially go through each of the $p$-values with the fixed threshold $p_{(i)} \leq \alpha / n$ and rejecting until $p_{(i)} > \alpha / n$. Hence, we can see Bonferroni's procedure in the same form as Holm's procedure, but the cutoffs are always stricter (or just as strict) as Holm's procedure for rejection; hence, Holm's procedure will be uniformly more powerful. We now provide a proof of FWER control under Holm's procedure.
+\begin{prop}
+\Cref{holmproc} controls the FWER at level $\alpha$.
+\end{prop}
+\begin{proof}
+
+\end{proof}
+
+\begin{note*}
+Another perspective on Holm's procedure is as a \emph{closure} of the Bonferroni global test. Though this is an interesting way to derive the procedure and lends itself to the construction of the Hochberg procedure as a closure of the Simes global test, it is not particularly pertinent to our discussion of multiple comparison procedures, so we will omit a discussion and leave the details to \cite{stat300}.
+\end{note*}
+
+
+\subsection{Hocherg's Procedure}
+
 
 
 
 Two notable procedures that control the FWER are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.\todo{provide detailed explanation of holm and hochberg}
 
-\subsection{Controlling FDR} 
+\section{The False Discovery Rate} 
 In the 1990s, a new metric for error control called the \emph{false discovery rate} (FDR) was introduced. Colloquially, the FDR is a more relaxed metric to use than the FWER, which refers to the probability of there being any false discoveries at all.
 \begin{defn}
 The \emph{false discovery proportion} is defined as
