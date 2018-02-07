@@ -1,7 +1,10 @@
-\documentclass[12pt,reqno]{report}
+\documentclass[11pt,reqno]{report}
 
 % Load custom package with options.
 \usepackage[wsectnum, wlibertine, wmarticle, wstats]{zhang-wentong_1-1}
+
+\theoremstyle{definition}
+\newtheorem{proc}[theorem]{Procedure}
 
 \graphicspath{{images/}}
 
@@ -45,12 +48,11 @@ In this thesis, we present an extension of the knockoffs procedure in multiple t
 \tableofcontents
 \onehalfspacing
 
-\chapter{An Overview of Multiple Comparison Procedures}
-\todo[inline]{a history of multiple testing?}
+\chapter{An Introduction to Multiple Comparison Procedures}
+\label{chapter1}
+In hypothesis testing, the \emph{multiple comparison problem} is a problem that arises when one wishes to test numerous hypotheses simultaneously. In particular, we wish to accept or reject each hypothesis. In this case, as the number of inferences that we make increase, we should also expect the number of errors to increase; for instance, when null $p$-values are distributed uniformly between $0$ and $1$, if $1000$ null hypotheses are tested, an average of $50$ will still be rejected at the $0.05$ significance level, whereas if only $20$ are tested, then an average of only $1$ will be rejected at the $0.05$ significance level.
 
-In hypothesis testing, the \emph{multiple comparison problem} is a problem that arises when one wishes to test numerous hypotheses simultaneously. At times, we may wish to test the \emph{global null}, or test the hypothesis that all of the individual null hypotheses are true. On the other hand, often we care about each individual hypothesis; we wish to accept or reject each hypothesis. In this case, as the number of inferences that we make increase, we should also expect the number of errors to increase; for instance, when null $p$-values are distributed uniformly between $0$ and $1$, if $1000$ null hypotheses are tested, an average of $50$ will still be rejected at the $0.05$ significance level.
-
-When we test multiple hypotheses simultaneously, we will end up with four possible outcomes for each hypothesis:
+When we test multiple hypotheses simultaneously, we will end up with four possible outcomes for each hypothesis, presented in the table below:
 \begin{center}
 \begin{tabular}{c|cc|c}
 & accepted & rejected & total \\ \hline
@@ -59,17 +61,39 @@ false & $T$ & $S$ & $n - n_0$ \\ \hline
 total & $n - R$ & $R$ & $n$
 \end{tabular}
 \end{center}
-In the table above, note that the quantities $R$ and $n_0$ are observed, but $U,V,T,S$ are actual unobserved random variables. \emph{Type 1 error} is concerned with the quantity $V$, which is the number of null hypotheses that are incorrectly rejected, and will be what we wish to control under various metrics. Note that although we are only bounding a measure of Type 1 error, we also care about obtaining high power in the following procedures.
+In the table above, note that the quantities $R$ and $n_0$ are observed, but $U,V,T,S$ are actual unobserved random variables. \emph{Type I error} is concerned with the quantity $V$, which is the number of null hypotheses that are incorrectly rejected, and will be what we wish to control under various metrics. Note that although we will be providing bounds on measures of Type I error, power will ultimately become the metric by which we wish to judge our procedures, as we will seek to maximize power of a procedure given a bound on Type I error. A good example of this can be seen by examining the Bonferroni correction, the Holms procedure, and the Hochberg procedure: for the same control on the \emph{family-wise error rate}, the Hochberg procedure is more powerful than the Holms procedure (which is more powerful than the Bonferroni correction).
 
-\subsection{Family-Wise Error Rate}
+\section{Family-Wise Error Rate}
+To begin, we will introduce a metric of Type I error called the \emph{family-wise error rate}.
+\subsection{Definition}
 \begin{defn}
-The \emph{family-wise error rate}, abbreviated FWER, is
+The \emph{family-wise error rate}, abbreviated FWER, is defined as
 \begin{equation}
 \on{FWER} = \mathbb{P}(V \geq  1)
 \end{equation}
 where $V$ is the number of erroneous rejections of null hypotheses.
 \end{defn}
-Note that bounding the FWER can be a rather stringent constraint on a procedure, as the procedure must then control the probability of any false rejections at all. Two notable procedures that control the FWER are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.\todo{provide detailed explanation of holm and hochberg}
+Note that bounding the FWER can be a rather stringent constraint on a procedure, as the procedure must then control the probability of any false rejections at all. \todo{say a bit more about the FWER here}
+
+\subsection{The Bonferroni Correction}
+One of the earliest methods presented in controlling the FWER is known as the \emph{Bonferroni correction} (alternatively the Bonferroni method). First used in \cite{dunn}, this procedure draws its name from the Bonferroni inequalities, which are used in the proof of its control of the FWER.
+\begin{proc}[Bonferroni Correction]
+\label{bonfcorr}
+Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ldots, H_{0, n}$, with associated $p$-values denoted $p_1, \ldots, p_n$ respectively. Fix a desired level $\alpha$. Then, reject all hypotheses $H_{0, i}$ for which
+\begin{equation}
+p_i \leq \alpha / n.
+\end{equation} In other words, test all hypotheses $H_{0, i}$ at level $\alpha / n$.
+\end{proc}
+\begin{prop}
+\Cref{bonfcorr} controls the FWER at level $\alpha$.
+\end{prop}
+\begin{proof}
+stuff
+\end{proof}
+
+
+
+Two notable procedures that control the FWER are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.\todo{provide detailed explanation of holm and hochberg}
 
 \subsection{Controlling FDR} 
 In the 1990s, a new metric for error control called the \emph{false discovery rate} (FDR) was introduced. Colloquially, the FDR is a more relaxed metric to use than the FWER, which refers to the probability of there being any false discoveries at all.
@@ -98,12 +122,15 @@ Note that the Benjamini-Hochberg procedure is a \emph{step-down procedure}, sinc
 
 
 \chapter{Introducing (Model-X) Knockoffs}
+\label{chapter2}
 Recently, Barber and Cand\`{e}s have proposed a new procedure that also controls the FDR for linear Gaussian models in \cite{knockoffs}. The procedure, known as the \emph{knockoff filter}, creates ``knockoff'' variables, which have the same covariance structure as the covariates, but are independent of the output, and uses these variables to control the false discovery rate. \cite{panning} then provided a sweeping generalization of the procedure beyond linear models.
 
 \todo[inline,size=\tiny]{not sure how much detail should be given to the background on knockoffs: should just cite the paper and move on?}
 
 \chapter{Multiple Knockoffs}
-The concept of multiple knockoffs is a direct extension of the work done in \cite{knockoffs} and \cite{panning}. We define multiple model-X knockoffs as follows. First, recall the definition of a null covariate.
+\label{chapter3}
+\section{Definition}
+The concept of multiple knockoffs is a direct extension of the work done in \cite{knockoffs} and \cite{panning} that we revisited in \Cref{chapter2}. We define multiple model-X knockoffs as follows. First, recall the definition of a null covariate.
 \begin{defn}
 A variable $X_j$ is said to be ``null'' if and only if $Y$ is independent of $X_j$ conditionally on the other variables $X_{-j} = \{ X_1, \ldots, X_p \} \setminus \{ X_j\}$. The subset of null variables is denoted by $\mathcal{H}_0$ and we call a variable $X_j$ ``non-null''or relevant if $j \not \in \mathcal{H}_0$.
 \end{defn}
