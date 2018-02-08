@@ -16,6 +16,8 @@
 \nc{\BP}{\mathbb{P}}
 \nc{\FWER}{\on{FWER}}
 \nc{\FDR}{\on{FDR}}
+\nc{\FDP}{\on{FDP}}
+\nc{\bOne}{\mathbb{1}}
 
 \numberwithin{equation}{section}
 
@@ -109,7 +111,7 @@ Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ld
 \begin{note*}
 A seqeuntial way to think about Holm's procedure is as follows. We begin by considering $p_{(1)}$: if $p_{(1)} \leq \alpha / n$, then reject $H_{(1)}$ and continue to $p_{(2)}$. Then, for each $p_{(i)}$, reject $H_{(i)}$ if $p_{(i)} \leq \alpha / (n - i + 1)$, and continue to $p_{(i+1)}$; otherwise, end the procedure. It is clearly seen that this is equivalent to finding $k$ as defined in \Cref{holmproc} and rejecting hypotheses up to $H_{(k-1)}$.
 
-In particular, Holm's procedure is a \emph{step-up procedure}, as the procedure functions by rejecting hypothesis sequentially until one is accepted. On the other hand, the Hochberg procedure, which we examine in the next section, is actually an extremely similar step-down procedure. In terms of power, step-down procedures can be significantly more powerful than step-up procedures; this is a phenomenon we will elaborate on further in the next section.
+In particular, Holm's procedure is a \emph{step-down procedure}, as the procedure functions by rejecting hypothesis sequentially until one is accepted. On the other hand, the Hochberg procedure, which we examine in the next section, is actually an extremely similar step-up procedure. In terms of power, step-up procedures can be significantly more powerful than step-down procedures; this is a phenomenon we will elaborate on further in the next section.
 \end{note*}
 From the sequential view of Holm's procedure, it now becomes evident that Holm's procedure is uniformly more powerful than Bonferroni's procedure as follows. We can translate Bonferroni's procedure into a sequential procedure as well: we may order the $p$-values in order, and sequentially go through each of the $p$-values with the fixed threshold $p_{(i)} \leq \alpha / n$ and rejecting until $p_{(i)} > \alpha / n$. Hence, we can put Bonferroni's procedure into the same form as Holm's procedure, but the cutoffs are always stricter (or just as strict) as Holm's procedure for rejection; hence, Holm's procedure will be uniformly more powerful since it simply makes more rejections. We now provide a proof of FWER control under Holm's procedure.
 \begin{prop}
@@ -128,7 +130,7 @@ This completes the proof as desired.
 Another perspective on Holm's procedure is as a \emph{closure} of the Bonferroni global test. Though this is an interesting way to derive the procedure and lends itself to the construction of Hochberg's procedure as a more conservative and simpler procedure than the closure of the Simes global test, it is not particularly pertinent to our discussion of multiple comparison procedures, so we will omit a discussion and leave the details to \cite{stat300}.
 \end{note*}
 
-\subsection{Hocherg's Procedure}
+\subsection{Hochberg's Procedure}
 Hochber'sg procedure is the final procedure that provides control of the FWER that we present. At a glance, Hochberg's procedure is quite similar to Holm's procedure, as it uses the same modified $p$-value cutoffs.
 \begin{proc}[Hochberg's Procedure]
 \label{hochproc}
@@ -137,17 +139,15 @@ Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ld
 \[ k = \max \left\{ 1 \leq i \leq n : p_{(i)} \leq \frac{\alpha}{n - i + 1} \right \}  \] and reject hypotheses $H_{(1)}, \ldots H_{(k-1)}$. In particular, if it is the case that 
 \[ p_{(i)} \leq \frac{\alpha}{n - i + 1}, \qquad \forall 1 \leq i \leq n, \] then we reject all $H_1, \ldots, H_n$.
 \end{proc}
-
 \begin{prop}
 Assuming independence of the $p$-values, \Cref{hochproc} controls the FWER at level $\alpha$.
 \end{prop}
-
 \begin{proof}
 Omitted, see \cite{stat300} for details.
 \end{proof}
 
 \begin{note*}
-The sequential way to think about Hochberg's procedure is as follows. We begin by consider $p_{(n)}$, and if $p_{(n)} \leq \alpha / n$, then reject all hypotheses. Otherwise, consider $p_{(n-1)}$, and proceed similarly: if $p_{(n-1)} \leq \alpha / (n-1)$, then reject hypotheses $H_{(1)}, \ldots, H_{(n-1)}$. In a sense, Hochberg's procedure operates opposite Holm's procedure as a \emph{step-down procedure} rather than a \emph{step-up procedure}: this allows for significantly increased power in some cases. For an extreme example, consider the case where all $p$-values are precisely $\alpha$. Then, Holm's procedure will not reject any hypotheses, whereas Hochberg's procedure will reject all hypotheses. 
+The sequential way to think about Hochberg's procedure is as follows. We begin by consider $p_{(n)}$, and if $p_{(n)} \leq \alpha / n$, then reject all hypotheses. Otherwise, consider $p_{(n-1)}$, and proceed similarly: if $p_{(n-1)} \leq \alpha / (n-1)$, then reject hypotheses $H_{(1)}, \ldots, H_{(n-1)}$. In a sense, Hochberg's procedure operates opposite Holm's procedure as a \emph{step-up procedure} rather than a \emph{step-down procedure}: this allows for significantly increased power in some cases. For an extreme example, consider the case where all $p$-values are precisely $\alpha$. Then, Holm's procedure will not reject any hypotheses, whereas Hochberg's procedure will reject all hypotheses. 
 \end{note*}
 
 
@@ -157,9 +157,9 @@ In the 1990s, a new metric for error control called the \emph{false discovery ra
 \begin{defn}
 The \emph{false discovery proportion} is defined as
 \begin{equation}
-\on{FDP} = \frac{V}{\max(R, 1)}
+\on{FDP} = \frac{V}{R \vee 1}
 \end{equation}
-where $R$ is the total number of rejections we make, while $V$ is the number of rejections of null hypotheses (ie. erroneous rejections). Note that $R$ is an observed value, but $V$ is not, so the $\on{FDP}$ is actually an unobserved random variable. As such, we strive for control of its expectation, and define
+where $R$ is the total number of rejections we make, while $V$ is the number of rejections of true null hypotheses (ie. erroneous rejections). Note that $R$ is an observed value, but $V$ is not, so the $\on{FDP}$ is actually an unobserved random variable. As such, we strive for control of its expectation, and define
 \begin{equation}
 \on{FDR} = \BE[\on{FDP}].
 \end{equation}
@@ -168,16 +168,50 @@ where $R$ is the total number of rejections we make, while $V$ is the number of 
 The question of controlling FWER versus FDR should be answered by using context for what a false discovery means in particular situations. For instance, studies regarding cheating may want to control the FWER (as false discoveries are serious false accusations), whereas studies regarding gene expresion may want to control the FDR (since the consequences of discovering false connections are likely not as severe). 
 
 \subsection{The Benjamini-Hochberg Procedure}
-The most well-known procedure for controlling the FDR is the Benjamini-Hochberg procedure. In \cite{bh}, Benjamini and Hochberg proposde control the FDR in lieu of the FWER, and introduced the following procedure that controls the FDR.
-\begin{theorem}
-Consider hypotheses $H_1, \ldots, H_m$ with corresponding $p$-values $P_1, \ldots, P_m$, and order them as $P_{(1)} \leq \ldots \leq P_{(m)}$. Let $q^*$ be the desired level of FDR control. Then, define
-\[ k = \max i \text{ s.t. } P_{(i)} \leq \frac{i}{m} \cdot q^{*} \] and reject all hypotheses $H_{(1)}, \ldots, H_{(k)}$. This procedure controls the FDR at level $q^*$. 
-\end{theorem}
-The main thing that we are interested in here is the actual procedure and is presented below; the proof can be found in the original paper, whereas a martingale proof is given in \cite{stat300}.
+The most well-known procedure for controlling the FDR is the Benjamini-Hochberg procedure. Indeed, in the original paper, Benjamini and Hochberg proposed control the FDR in lieu of the FWER, and introduced the following procedure that controls the FDR. Note that similar to \Cref{hochproc}, the Benjamini-Hochberg procedure is a \emph{step-up procedure}; the selected cutoff $k$ is a maximum index in a similar form. 
+\begin{proc}
+\label{bhproc}
+Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ldots, H_{0, n}$, with associated $p$-values denoted $p_1, \ldots, p_n$ respectively. Fix a desired level of FDR control, $q^*$. Then, order the $p$-values so that
+\[ p_{(1)} \leq p_{(2)} \leq \cdots \leq p_{(n)} \] and let $H_{(1)}, \ldots, H_{(n)}$ be the corresponding hypotheses. Then, define
+\[ k = \max \left\{ 1 \leq i \leq n : p_{(i)} \leq \frac{i}{n} \cdot q^* \right \}  \] 
+and reject all hypotheses $H_{(1)}, \ldots, H_{(k)}$.  
+\end{proc}
+\begin{prop}
+Assume independence of the $p$-values. Then, \Cref{bhproc} controls the FDR at level $q^*$.
+\end{prop}
+Instead of presenting the original proof of FDR control that Benjamini and Hochberg provide in their paper, we will provide a crisper proof from \cite{stat300}.
+\begin{proof}
+Here, we are just rehearsing the original proof presented in \cite{stat300}. Let $\mathcal{H}_0$ denote the set of true null hypotheses, and let $n_0 = |\mathcal{H}_0|$ be the number of true null hypotheses.  First, we may assume that $n_0 \geq 1$ (otherwise the claim is vacuously true). Then, recall that the FDP is defined as 
+\[ \FDP = \frac{V}{R \vee 1} \] where $V$ is the number of incorrect rejections and $R$ is the total number of rejections. Now, for each null $i \in \mathcal{H}_0$, define the indicator variable $V_i = \bOne_{H_{0, i} \text{ rejected}}$. This allows us to re-express the FDP as
+\[ \FDP = \frac{V}{R \vee 1} = \sum_{i \in \mathcal{H}_0} \frac{V_i}{R \vee 1}. \] 
+Next, note that if we can show $\BE[ {V_i}/{(R \vee 1)}] = q / n$, then the rest of the proof follows easily. To show that this is true, first note that we can rewrite
+\begin{equation}
+\frac{V_i}{R \vee 1} = \sum_{k=1}^n \frac{V_i \bOne_{\{R = k\}}}{k}
+\end{equation}
+since the sum simply runs over the possible values of the number of rejections, $R$; in addition, note that the above formula still holds when $R = 0$ since in that case, we have that $V_i = 0$ by definition.
 
+Next, we will note some properties of the Benjamini-Hochberg procedure, which we will use later in the proof. First, note that when the procedure makes $k$ rejections, then a hypothesis $H_{0, i}$ is rejected if and only if $p_i \leq q^* \cdot k / n$. As such, we have that
+\begin{equation}
+V_i =  \bOne_{H_{0, i} \text{ rejected}} = \bOne_{\{ p_i \leq q \cdot k / n \}}.
+\end{equation}
+Second, consider the case where $H_{0,i}$ is rejected, so $p_i \leq q \cdot k / n$. Then, let $R_i'$ denote the number of rejections by the Benjamini-Hochberg procedure if we were to set $p_i \to 0$: when $H_{0, i}$ is rejected, $R_i' = R$ since we are simply reordering the first $k$ $p$-values, which will not change the number of hypotheses rejected. On the other hand, consider the case where $H_{0,i}$ is not rejected, so $p_i > q \cdot k / n$. Then, $V_i = 0$. In either case, we will have that the value of $V_i \cdot \bOne_{\{R = k\}} = V_i \cdot \bOne_{\{ R_i' = k \}}$.
 
-Note that the Benjamini-Hochberg procedure is a \emph{step-down procedure}, since the selected $k$ is a maximum index, rather than a minimum. \todo{provide greater exposition of BH procedure}
-
+We will now piece the proof together as follows. Instead of looking at the expectation, we will examine a conditional expectation upon all the other $p$-values as follows. Let $\mathcal{F}_i = \{ p_1, \ldots, p_{i-1}, p_{i+1}, \ldots, p_n \}$. Then,
+\begin{equation}
+\BE \left[ \left. \frac{V_i}{R \vee 1} \right| \mathcal{F}_i  \right] = \sum_{k=1}^n \frac{\BE\left[ V_i \bOne_{\{R = k\}} | \mathcal{F}_i \right]}{k} = \sum_{k=1}^n \frac{\BE\left[ V_i \bOne_{\{ R_i' = k \}} | \mathcal{F}_i \right]}{k} =  \sum_{k=1}^n \frac{\BE\left[ \bOne_{\{ p_i \leq q \cdot k / n \}} \bOne_{\{ R_i' = k \}} | \mathcal{F}_i \right]}{k},
+\end{equation}
+where the last two equalities used the above observations about the Benjamini-Hochberg procedure to simplify the expression. Next, noting that the $p$-values are independent and that $p_i \sim \Unif[0,1]$, we can further simplify that
+\begin{equation}
+\sum_{k=1}^n \frac{\BE\left[ \bOne_{\{ p_i \leq q \cdot k / n \}} \bOne_{\{ R_i' = k \}} | \mathcal{F}_i \right]}{k} = \sum_{k=1}^n \frac{\left( q \cdot k / n \right) \cdot \BE\left[ \bOne_{\{ R_i' = k \}} | \mathcal{F}_i \right]}{k} = \frac{q}{n} \cdot \sum_{k=1}^n \bOne_{\{ R_i' = k \}}.
+\end{equation}
+Above, the first equality comes from separating the expectation via independence and using the distribution of the $p$-values, while the second equality is given by the fact that $\bOne_{\{ R_i' = k \}}$ is deterministic conditional on $\mathcal{F}_i$. However, we claim that
+\begin{equation}
+ \sum_{k=1}^n \bOne_{\{ R_i' = k \}} = 1.
+\end{equation} This is true as follows. Note that $R_i \geq 1$, as when we set $p_i \to 0$, we must make at least one rejection of $H_{0, i}$ at the least. On the other hand, we know that $R_i'$ will take on one value between $1$ and $n$, which means that the sum of the indicators will be exactly $1$. Hence, we have shown that
+\[ \BE \left[ \left. \frac{V_i}{R \vee 1} \right| \mathcal{F}_i  \right] = \frac{q}{n}. \] Then, the law of total expectation allows to write the FDR as
+\[ \FDR = \BE[\FDP] = \sum_{i \in \mathcal{H}_0} \BE\left[ \frac{V_i}{R \vee 1} \right] = \sum_{i \in \mathcal{H}_0} \BE \left[ \BE\left[ \left. \frac{V_i}{R \vee 1}  \right| \mathcal{F}_i \right] \right] = \sum_{i \in \mathcal{H}_0} \frac{q}{n} = \frac{n_0}{n} \cdot q \leq q.  \] This bounds the FDR as desired and completes the proof.
+\end{proof}
+\todo{further discussion on BH procedure?}
 
 \chapter{Introducing (Model-X) Knockoffs}
 \label{chapter2}
