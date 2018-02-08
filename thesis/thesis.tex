@@ -106,28 +106,51 @@ Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ld
 \[ k = \min \left\{ 1 \leq i \leq n : p_{(i)} > \frac{\alpha}{n - i + 1} \right \}  \] and reject hypotheses $H_{(1)}, \ldots H_{(k-1)}$. In particular, if it is the case that 
 \[ p_{(i)} \leq \frac{\alpha}{n - i + 1}, \qquad \forall 1 \leq i \leq n, \] then we reject all $H_1, \ldots, H_n$.
 \end{proc}
-\begin{rmk}
-A seqeuntial way to think about Holm's procedure is as follows. We begin by considering $p_{(1)}$: if $p_{(1)} \leq \alpha / n$, then reject $H_{(1)}$ and continue to $p_{(2)}$. Then, for each $p_{(i)}$, reject $H_{(i)}$ if $p_{(i)} \leq \alpha / (n - i + 1)$, and continue to $p_{(i+1)}$; otherwise, end the procedure.
-\end{rmk}
-From the sequential view of Holm's procedure, it now becomes evident that Holm's procedure is uniformly more powerful than Bonferroni's procedure as follows. We can translate Bonferroni's procedure into a sequential procedure as well: we may order the $p$-values in order, and sequentially go through each of the $p$-values with the fixed threshold $p_{(i)} \leq \alpha / n$ and rejecting until $p_{(i)} > \alpha / n$. Hence, we can see Bonferroni's procedure in the same form as Holm's procedure, but the cutoffs are always stricter (or just as strict) as Holm's procedure for rejection; hence, Holm's procedure will be uniformly more powerful. We now provide a proof of FWER control under Holm's procedure.
+\begin{note*}
+A seqeuntial way to think about Holm's procedure is as follows. We begin by considering $p_{(1)}$: if $p_{(1)} \leq \alpha / n$, then reject $H_{(1)}$ and continue to $p_{(2)}$. Then, for each $p_{(i)}$, reject $H_{(i)}$ if $p_{(i)} \leq \alpha / (n - i + 1)$, and continue to $p_{(i+1)}$; otherwise, end the procedure. It is clearly seen that this is equivalent to finding $k$ as defined in \Cref{holmproc} and rejecting hypotheses up to $H_{(k-1)}$.
+
+In particular, Holm's procedure is a \emph{step-up procedure}, as the procedure functions by rejecting hypothesis sequentially until one is accepted. On the other hand, the Hochberg procedure, which we examine in the next section, is actually an extremely similar step-down procedure. In terms of power, step-down procedures can be significantly more powerful than step-up procedures; this is a phenomenon we will elaborate on further in the next section.
+\end{note*}
+From the sequential view of Holm's procedure, it now becomes evident that Holm's procedure is uniformly more powerful than Bonferroni's procedure as follows. We can translate Bonferroni's procedure into a sequential procedure as well: we may order the $p$-values in order, and sequentially go through each of the $p$-values with the fixed threshold $p_{(i)} \leq \alpha / n$ and rejecting until $p_{(i)} > \alpha / n$. Hence, we can put Bonferroni's procedure into the same form as Holm's procedure, but the cutoffs are always stricter (or just as strict) as Holm's procedure for rejection; hence, Holm's procedure will be uniformly more powerful since it simply makes more rejections. We now provide a proof of FWER control under Holm's procedure.
 \begin{prop}
 \Cref{holmproc} controls the FWER at level $\alpha$.
 \end{prop}
 \begin{proof}
+Let $\mathcal{H}_0$ denote the set of true null hypotheses, and let $n_0 = |\mathcal{H}_0|$ be the number of true null hypotheses. Then, let $i_0$ be the rank of the smallest null $p$-value corresponding to a true null hypothesis. This means that the first true null hypothesis is encountered when examining $p_{(i_0)}$ in the sequential interpretation of Holm's procedure. Now, note that we must have
+\[ i_0 \leq n - n_0 + 1. \] This is true by inspection, since there are only $n - n_0$ false null hypotheses.
 
+Now, consider the situation in which Holm's procedure falsely rejects a true null hypothesis. This happens if and only if the first true null hypothesis is rejected, so we may simply think about when the first true null hypothesis is rejected. This happens precisely when for all $i \leq i_0$, we have that $p_{(i)} \leq \alpha / (n - i + 1)$, and so in particular $p_{(i_0)} \leq \alpha / (n - i_0 + 1) \leq \alpha / n_0$. Hence,
+\[ \FWER = \BP(V \geq 1) = \BP\left( p_{(i_0)} \leq \alpha / n_0 \right) = \BP\left( \min_{i \in \mathcal{H}_0} p_{i} \leq \alpha / n_0 \right) \leq \sum_{i \in \mathcal{H}_0} \BP(p_{i} \leq \alpha / n_0)  = \alpha. \]
+This completes the proof as desired.
 \end{proof}
 
 \begin{note*}
-Another perspective on Holm's procedure is as a \emph{closure} of the Bonferroni global test. Though this is an interesting way to derive the procedure and lends itself to the construction of the Hochberg procedure as a closure of the Simes global test, it is not particularly pertinent to our discussion of multiple comparison procedures, so we will omit a discussion and leave the details to \cite{stat300}.
+Another perspective on Holm's procedure is as a \emph{closure} of the Bonferroni global test. Though this is an interesting way to derive the procedure and lends itself to the construction of Hochberg's procedure as a more conservative and simpler procedure than the closure of the Simes global test, it is not particularly pertinent to our discussion of multiple comparison procedures, so we will omit a discussion and leave the details to \cite{stat300}.
+\end{note*}
+
+\subsection{Hocherg's Procedure}
+Hochber'sg procedure is the final procedure that provides control of the FWER that we present. At a glance, Hochberg's procedure is quite similar to Holm's procedure, as it uses the same modified $p$-value cutoffs.
+\begin{proc}[Hochberg's Procedure]
+\label{hochproc}
+Suppose we are given a collection of $n$ null hypotheses, denoted $H_{0, 1}, \ldots, H_{0, n}$, with associated $p$-values denoted $p_1, \ldots, p_n$ respectively. Fix a desired level $\alpha$. Then, order the $p$-values so that
+\[ p_{(1)} \leq p_{(2)} \leq \cdots \leq p_{(n)} \] and let $H_{(1)}, \ldots, H_{(n)}$ be the corresponding hypotheses. Then, define
+\[ k = \max \left\{ 1 \leq i \leq n : p_{(i)} \leq \frac{\alpha}{n - i + 1} \right \}  \] and reject hypotheses $H_{(1)}, \ldots H_{(k-1)}$. In particular, if it is the case that 
+\[ p_{(i)} \leq \frac{\alpha}{n - i + 1}, \qquad \forall 1 \leq i \leq n, \] then we reject all $H_1, \ldots, H_n$.
+\end{proc}
+
+\begin{prop}
+Assuming independence of the $p$-values, \Cref{hochproc} controls the FWER at level $\alpha$.
+\end{prop}
+
+\begin{proof}
+Omitted, see \cite{stat300} for details.
+\end{proof}
+
+\begin{note*}
+The sequential way to think about Hochberg's procedure is as follows. We begin by consider $p_{(n)}$, and if $p_{(n)} \leq \alpha / n$, then reject all hypotheses. Otherwise, consider $p_{(n-1)}$, and proceed similarly: if $p_{(n-1)} \leq \alpha / (n-1)$, then reject hypotheses $H_{(1)}, \ldots, H_{(n-1)}$. In a sense, Hochberg's procedure operates opposite Holm's procedure as a \emph{step-down procedure} rather than a \emph{step-up procedure}: this allows for significantly increased power in some cases. For an extreme example, consider the case where all $p$-values are precisely $\alpha$. Then, Holm's procedure will not reject any hypotheses, whereas Hochberg's procedure will reject all hypotheses. 
 \end{note*}
 
 
-\subsection{Hocherg's Procedure}
-
-
-
-
-Two notable procedures that control the FWER are Holm's procedure and Hochberg's procedure. Detailed descriptions of these procedures may be found in \cite{stat300}. The two methods are quite similar, in particular since the threshold for selecting which hypotheses to reject is the same. The key difference is the order of iteration through the hypotheses: Holm's procedure is a \emph{step-up procedure} as hypotheses are rejected until an acceptance, at which point the procedure finishes. On the other hand, Hochberg's procedure is a \emph{step-down procedure} which scans backwards until a hypothesis is rejected, at which point all hypotheses prior are rejected as well. Fascinatingly, both procedures are able to provide strong control of the FWER (ie. regardless of which hypotheses are true and false), though typically Hochberg's procedure yields more power.\todo{provide detailed explanation of holm and hochberg}
 
 \section{The False Discovery Rate} 
 In the 1990s, a new metric for error control called the \emph{false discovery rate} (FDR) was introduced. Colloquially, the FDR is a more relaxed metric to use than the FWER, which refers to the probability of there being any false discoveries at all.
@@ -144,6 +167,7 @@ where $R$ is the total number of rejections we make, while $V$ is the number of 
 \end{defn}
 The question of controlling FWER versus FDR should be answered by using context for what a false discovery means in particular situations. For instance, studies regarding cheating may want to control the FWER (as false discoveries are serious false accusations), whereas studies regarding gene expresion may want to control the FDR (since the consequences of discovering false connections are likely not as severe). 
 
+\subsection{The Benjamini-Hochberg Procedure}
 The most well-known procedure for controlling the FDR is the Benjamini-Hochberg procedure. In \cite{bh}, Benjamini and Hochberg proposde control the FDR in lieu of the FWER, and introduced the following procedure that controls the FDR.
 \begin{theorem}
 Consider hypotheses $H_1, \ldots, H_m$ with corresponding $p$-values $P_1, \ldots, P_m$, and order them as $P_{(1)} \leq \ldots \leq P_{(m)}$. Let $q^*$ be the desired level of FDR control. Then, define
