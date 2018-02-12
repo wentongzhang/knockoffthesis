@@ -18,6 +18,7 @@
 \nc{\FDR}{\on{FDR}}
 \nc{\FDP}{\on{FDP}}
 \nc{\bOne}{\mathbb{1}}
+\nc{\bX}{\mathbf{X}}
 
 \numberwithin{equation}{section}
 
@@ -211,60 +212,162 @@ Above, the first equality comes from separating the expectation via independence
 \[ \BE \left[ \left. \frac{V_i}{R \vee 1} \right| \mathcal{F}_i  \right] = \frac{q}{n}. \] Then, the law of total expectation allows to write the FDR as
 \[ \FDR = \BE[\FDP] = \sum_{i \in \mathcal{H}_0} \BE\left[ \frac{V_i}{R \vee 1} \right] = \sum_{i \in \mathcal{H}_0} \BE \left[ \BE\left[ \left. \frac{V_i}{R \vee 1}  \right| \mathcal{F}_i \right] \right] = \sum_{i \in \mathcal{H}_0} \frac{q}{n} = \frac{n_0}{n} \cdot q \leq q.  \] This bounds the FDR as desired and completes the proof.
 \end{proof}
-\todo{further discussion on BH procedure?}
 
 \chapter{Introducing (Model-X) Knockoffs}
 \label{chapter2}
-Recently, Barber and Cand\`{e}s have proposed a new procedure that also controls the FDR for linear Gaussian models in \cite{knockoffs}. The procedure, known as the \emph{knockoff filter}, creates ``knockoff'' variables, which have the same covariance structure as the covariates, but are independent of the output, and uses these variables to control the false discovery rate. \cite{panning} then provided a sweeping generalization of the procedure beyond linear models.
+% Since the publication of \cite{bh}, the Benjamini-Hochberg procedure has become 
 
-\todo[inline,size=\tiny]{not sure how much detail should be given to the background on knockoffs: should just cite the paper and move on?}
+Recently, Barber and Cand\`{e}s have proposed a new procedure that also controls the FDR for linear Gaussian models in \cite{knockoffs}. The procedure, known as the \emph{knockoff filter}, creates ``knockoff'' variables, which have the same covariance structure as the covariates, but are independent of the output, and uses these variables in a procedure that controls the false discovery rate. Originally, \cite{knockoffs} gave a description of the procedure in the specific case where $\b{y}$ follows a linear Gaussian model, and the covariate matrix is fixed. \cite{panning} then provided a sweeping generalization of the procedure beyond linear models. In this section, we seek to provide a self-contained exposition of the model-X knockoffs framework and procedure. In particular, we will loosely follow the structure of \cite{panning}, while borrowing necessary details from \cite{knockoffs}. After defining the problem rigorously, we will give a theoretical definition of model-X knockoffs and prove some results regarding their properties, including the procedure that controls FDR. We will then think about how to construction of knockoffs more concretely.
+
+\section{The Model-X Paradigm}
+
+\section{Problem Statement}
+Here, we will provide a rigorous statement of the problem that we seek to solve: this is essentially identical to \cite{panning}, but for sake of thoroughness, we find it necessary to review.
+
+Suppose we have i.i.d. samples from a population in the form $(X, Y)$. Here, $X$ is a $p$-dimensional vector $(X_1, \ldots, X_p) \in \BR^p$, and $Y$ is a scalar in $\BR$. We wish to determine if there is a smaller subset of these $X$ variables for which the conditional distribution of $Y$ depends upon: we wish to find the smallest subset $\mathcal{S}$ such that conditional on $\{ X_j \}_{j \in \mathcal{S}}$, $Y$ is independent of the other variables $\{ X_j \}_{j \not \in \mathcal{S}}$. In most use cases and situations, the set $\mathcal{S}$ will be unique. A pathological example is given in \cite{panning}, but we will not concern ourselves with these edge cases. We now provide a definition of a ``null'' covariate versus a ``relevant'' covariate, bearing in mind the context of attempting to find the desired subset $\mathcal{S}$.
+\begin{defn}
+A variable $X_j$ is said to be ``null'' if and only if $Y$ is independent of $X_j$ conditionally on the other variables $X_{-j} = \{ X_1, \ldots, X_p \} \setminus \{ X_j\}$. The subset of null variables is denoted by $\mathcal{H}_0$ and we call a variable $X_j$ ``non-null''or ``relevant'' if $j \not \in \mathcal{H}_0$.
+\end{defn}
+We may then rephrase the task at hand to looking for ``relevant'' variables while controlling the FDR. In particular, suppose we have a selection set $\hat{\mathcal{S}}$, a subset of the covariates. Then, the number of false discoveries, denoted $V$ previously, will be $\left| \hat{\mathcal{S}} \cap \mathcal{H}_0 \right|$, whereas thte total number of discoveries, denoted $R$ previously, will be $\left| \hat{\mathcal{S}} \right|$. As such, the FDP and FDR are respectively
+\begin{equation}
+\FDP = \frac{\left| \hat{\mathcal{S}} \cap \mathcal{H}_0 \right|}{\left| \hat{\mathcal{S}} \right| \vee 1}, \qquad \FDR = \BE \left[ \frac{\left| \hat{\mathcal{S}} \cap \mathcal{H}_0 \right|}{\left| \hat{\mathcal{S}} \right| \vee 1} \right].
+\end{equation}
+
+\section{Definitions}
+\subsection{Knockoff Variables}
+We will now provide the definition of model-X knockoffs, as presented in \cite{panning}.
+\begin{defn}
+\label{knockdef}
+Model-X knockoffs for a family of random variables $X = (X_1, \ldots, X_p)$ are a new family of random variables $\tilde{X} = (\tilde{X}_1, \ldots, \tilde{X}_p)$ constructed satisfying the following two properties.
+ (1) \emph{Exchangeability.} For any subset $S \subset \{ 1, \ldots, p \}$, 
+\begin{equation}
+(X, \tilde{X})_{\on{swap}(S)} \overset{d}{=} (X, \tilde{X}),
+\end{equation}
+where $(X, \tilde{X})_{\on{swap}(S)}$ is the vector obtained from $(X, \tilde{X})$ by swapping $X_i$ and $\tilde{X}_i$ for $i \in S$. (2) \emph{Conditional Independence}. $\tilde{X} \indep Y \mid X$ if there is a response variable $Y$. This property is satisfied if $\tilde{X}$ is constructed without looking at $Y$.
+\end{defn}
+At a high level, the knockoffs procedure will work as follows: we can generate test statistics using the original covariates as well as the knockoff covariates in the same way. Then, the original covariates that are relevant to $Y$ should generate test statistics that are siginificant relative to its knockoff, while the null covariates should not generate test statistics that are very different than its knockoffs, and this should allow us to find the relevant covariates.
+
+The following is an important property of knockoff variables, which we will generalize later.
+\begin{lem}[Exchangeability of Nulls]
+\label{origexchangeofnulls}
+Let $S \subset \mathcal{H}_0$ be a subset of nulls. Then
+\[ [\bX, \tilde{\bX} ] \mid y \overset{d}{=} [\bX, \tilde{\bX} ]_{\on{swap}(S)} \mid y. \]
+\end{lem}
+\begin{proof}
+Omitted, but uses \Cref{origexchangeofnulls} in the original proof. This is also a special case of \Cref{lemma2.3}, which is proved later.
+\end{proof}
+\subsection{Feature Statistics}
+We now describe the feature statistics that we wish to use in our procedure. We wish to compute statistics $W_j$ for each $j \in \{ 1, \ldots, p \}$, where a large value of $W_j$ gives evidence that $X_j$ is a relevant (non-null) covariate. In particular, the test statistic will be a function of both the original covariates and the knockoffs, as well as a function of $y$, so
+\[ W_j = w_j([\bX, \tilde{\bX}], y) \] for some function $w_j$ where larger values of $w_j$ indicates stronger evidence that $X_j$ is non-null. In addition, we also need to ensure that the function $w_j$ satisfies the \emph{flip-sign property}, which says that if we switch an original covariate with its knockoff, then the sign of the knockoff statistic is switched. Formally,
+\[ w_j([\bX, \tilde{\bX}]_{\on{swap}(S)}, y) = \begin{cases}
+w_j([\bX, \tilde{\bX}], y), \qquad & j \not \in S, \\
+-w_j([\bX, \tilde{\bX}], y), \qquad & j \in S.
+\end{cases}\]
+Although the $W_j$ are a convenient way to package all of the pertinent information coming from the original covariates and its knockoffs into a single number, the statistic soon becomes unwieldy when we attempt to generalize later. As such, perhaps it is more apt to think about the $W_j$ in the following way. We can generate individual statistics that measure the importance of each covariate, call them $Z_j$ and $\tilde{Z}_j$ respectively. More formally, we can construct the vector $(Z, \tilde{Z}) = t([\bX, \tilde{\bX}], y)$ such that
+\[ (Z, \tilde{Z})_{\on{swap}(S)} = t([\bX, \tilde{\bX}]_{\on{swap}(S)}, y) \] Then, the $W_j$ can be constructed by choosing an antisymmetric function $f_j$ and letting
+\[ W_j = f_j(Z_j, \tilde{Z}_j). \] In particular, a choice of statistic $W_j$ is in correspondence with a choice of statistic $Z_j$ and a choice of antisymmetric function $f_j$. In our work with multiple knockoffs, we will generalize feature statistics by using $Z_j$'s as well as a symmetric function; the analog to the sign of $W_j$ will be examined separately. We restate Lemma 3.3 from \cite{panning}
+ as follows.
+\begin{lem}
+Conditional on $(|W_1|, \ldots, |W_p|)$, the signs of the null $W_j$'s are i.i.d. coin flips. 
+\end{lem}
+\begin{proof}
+Omitted. This is a special case of \Cref{lemma2.4}, which is proved later.
+\end{proof}
+The above lemma critically allows us to convert the signs of the $W_j$ statistics into one-bit $p$-values, which are then used in the proof of FDR control via viewing the knockoff procedure as a sequential selection testing procedure as in \cite{knockoffs}. 
+
+\section{The Knockoffs Procedure}
+Now that we have built the machinery of knockoff variables as well as the generation of feature statistics, we are ready to describe the knockoffs procedure.
+\begin{proc}[Knockoffs/Knockoffs++]
+\label{knockproc}
+Suppose we are given a collection of $p$ covariates $(X_1, \ldots, X_p)$ along with a response variable $y$. Fix a desired control level $q$. Then, generate knockoffs $(\tilde{X}_1, \ldots, \tilde{X}_p)$ and compute feature statistics $W_j$ for each $X_j$ satisfying the flip-sign property defined above. Next, for the Knockoffs procedure, define $\tau$ as
+\begin{equation}
+\tau = \min \left\{ t > 0 : \frac{\# \{ j : W_j \leq -t \} }{\# \{ j : W_j \geq t \} } \leq q \right\}.
+\end{equation}
+Then, the set of covariates selected is precisely
+\begin{equation}
+\hat{\mathcal{S}} = \{ j : W_j \geq \tau \}.
+\end{equation}
+Alternatively, for the Knockoffs++ procedure, define $\tau_+$ as 
+\begin{equation}
+\tau_+ = \min \left\{ t > 0 : \frac{1 + \# \{ j : W_j \leq -t \} }{\# \{ j : W_j \geq t \} } \leq q \right\}.
+\end{equation}
+Similarly, the set of covariates selected here is 
+\begin{equation}
+\hat{\mathcal{S}}_+ = \{ j : W_j \geq \tau_+ \}.
+\end{equation}
+\end{proc}
+\begin{theorem}
+The Knockoffs procedure from \Cref{knockproc} controls the modified FDR, defined as
+\[ \on{mFDR} = \BE \left[ \frac{ \left| \hat{S} \cap \mathcal{H}_0 \right|}{|\hat{S}| + 1 / q} \right] \leq q. \] The Knockoffs++ procedure from \Cref{knockproc} controls the usual FDR.
+\end{theorem}
+\begin{proof}
+The proof comes from Theorem 1 and 2 of \cite{knockoffs}, which are respectively proven via Theorem 3 of \cite{knockoffs} by framing the knockoffs procedure as a sequential testing procedure. We will not press into the details here, as they will be explored in more detail later on.
+\end{proof}
+
+\section{Building and Using Knockoffs}
+Now that we have described the knockoffs procedure, the question of implementation still remains. In particular, how might one go about constructing the knockoff variables and sampling them? In addition, what are the benefits to using this procedure as opposed to simply applying Benjamini-Hochberg: is it clear that there are significant benefits to using this method? In this section, we will first provide an example of how to construct knockoff variables in the Gaussian case and briefly discuss a more general algorithm for sampling knockoff variables.   
+\subsection{The Gaussian Case}
+Consider the case where $X \sim \N(0, \Sigma)$. Then, the distribution of $(X, \tilde{X})$ can be
+\[ (X, \tilde{X}) \sim \N \left(0, \begin{bmatrix}
+	\Sigma & \Sigma - \on{diag}\{s \} \\
+	\Sigma - \on{diag}\{s \} & \Sigma
+\end{bmatrix} \right). \] However, in many cases, we will be interested in the conditional distribution of $\tilde{X} \mid X$: if we have already observed $X$, then what is the conditional distribution of the knockoffs $\tilde{X}$ In the case of Gaussian knockoffs, this is readily answered by the classical formula
+\[ \tilde{X} \mid X \sim N(\mu, V) \] where the mean and variance are given by
+\begin{align*}
+\mu &= X - X \Sigma\inv \on{diag}\{ s \}, \\
+V &= 2 \on{diag}\{ s \} - \on{diag}\{ s \} \Sigma\inv \on{diag} \{ s \}.
+\end{align*}
+In practice, this allows us to sample knockoff variables quite easily when we have observed values of $X$ from a Gaussian distribution. Note that above, we are able to choose the values of $\on{diag}\{s\}$ for ourselves, under the constraint that the covariance matrix of $(X, \tilde{X})$ is positive semi-definite. In particular, we will want to ``maximize'' the values of the diagonal matrix $\on{diag}\{s\}$ in order to maximize the power of the knockoff procedure, as we will want to construct knockoffs that are not too similar to the original covariates. There are a few different ways that we may seek to do this as follows.
+\subsubsection{Equicorrelated Knockoffs}
+
+\subsubsection{}
+
+\subsection{An Exact Construction of Knockoff Variables}
+In general, the problem of sampling knockoffs can be quite hard and remains a hard question posed. \cite{panning} offers an algorithm called the Sequential Conditional Independent Pairs algorithm to deal with the general case, but for the purpose of this paper we will not devote much time to thinking about the general case. Although it is not too difficult to generalize the Sequential Conditional Independent Pairs to multiple knockoffs, we will mostly focus on generalizing the case of Gaussian covariates in order to obtain more information about the power and effectiveness of using multiple knockoffs as opposed to other methods. Note that \cite{panning} rovided significant evidence that using the model-X knockoffs procedure was quite effective and led to significant power gain in certain scenarios, and we hope to do the same (or disprove the effectiveness of multiple knockoffs) in later parts of this paper.
 
 \chapter{Multiple Knockoffs}
 \label{chapter3}
+In this chapter, we present an extension to the knockoffs procedure described in \Cref{chapter2}. The idea is to construct a family of knockoffs rather than a singlet set of knockoffs, and we will present the necessary generalizations and formalizations to do so. As far as the writer is aware, the concept of multiple knockoffs has been suggested in \cite{knockoffs} as well as \cite{panning}, but not formalized rigorously up to this point.
 \section{Definition}
-The concept of multiple knockoffs is a direct extension of the work done in \cite{knockoffs} and \cite{panning} that we revisited in \Cref{chapter2}. We define multiple model-X knockoffs as follows. First, recall the definition of a null covariate.
+The definition of multiple knockoffs variables is a direct extension of the work done in \cite{knockoffs} and \cite{panning} that we revisited in \Cref{chapter2}. We define multiple model-X knockoffs as follows.
 \begin{defn}
-A variable $X_j$ is said to be ``null'' if and only if $Y$ is independent of $X_j$ conditionally on the other variables $X_{-j} = \{ X_1, \ldots, X_p \} \setminus \{ X_j\}$. The subset of null variables is denoted by $\mathcal{H}_0$ and we call a variable $X_j$ ``non-null''or relevant if $j \not \in \mathcal{H}_0$.
-\end{defn}
-\begin{defn}
-Multiple model-X knockoffs for a family of random variables $X = (X_1, \ldots, X_p)$ are a collection of $n$ families of new random variables $X^{(i)} = (X^{(i)}_1, \ldots X^{(i)}_p)$ constructed satisfying the following two properties, analogous to those of knockoffs: (1) \emph{Exchangeability.} Let $[[n]]$ denote the set $\{ 0, \ldots, n \}$. For each $1 \leq j \leq p$, let $\sigma_j : [[n]] \to [[n]]$ be any permutation of the indices $0$ to $n$. Then, letting $X^{(0)} = X$,
+Multiple model-X knockoffs for a family of random variables $X = (X_1, \ldots, X_p)$ are a collection of $n$ families of new random variables $X^{(i)} = (X^{(i)}_1, \ldots X^{(i)}_p)$ constructed satisfying the following two properties, analogous to those of knockoffs: (1) \emph{Exchangeability.} Let $[[m]]$ denote the set $\{ 0, \ldots, m \}$. For each $1 \leq j \leq p$, let $\sigma_j : [[m]] \to [[m]]$ be any permutation of the indices $0$ to $m$. Then, letting $X^{(0)} = X$,
 \begin{equation}
-(X^{(0)}, \ldots, X^{(n)}) \overset{d}= (X^{(\sigma_1(0))}_{1}, \ldots, X^{(\sigma_p(0))}_{p}, \ldots, X^{(\sigma_1(n))}_{1}, \ldots, X^{(\sigma_p(n))}_{p}  )
+(X^{(0)}, \ldots, X^{(m)}) \overset{d}= (X^{(\sigma_1(0))}_{1}, \ldots, X^{(\sigma_p(0))}_{p}, \ldots, X^{(\sigma_1(m))}_{1}, \ldots, X^{(\sigma_p(m))}_{p}  )
 \end{equation}
 For convenience, we write
 \begin{equation}
-\{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right) \overset{\on{def}}{=} (X^{(\sigma_1(0))}_{1}, \ldots, X^{(\sigma_p(0))}_{p}, \ldots, X^{(\sigma_1(n))}_{1}, \ldots, X^{(\sigma_p(n))}_{p}  ).
+\{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(m)} \right) \overset{\on{def}}{=} (X^{(\sigma_1(0))}_{1}, \ldots, X^{(\sigma_p(0))}_{p}, \ldots, X^{(\sigma_1(m))}_{1}, \ldots, X^{(\sigma_p(m))}_{p}  ).
 \end{equation}
-(2) \emph{Conditional Independence.} $(X^{(1)}, \ldots, X^{(n)}) \indep Y \mid X$ if there is a response variable $Y$. This property is guaranteed if the $X^{(i)}$ are constructed without looking at $Y$.
+(2) \emph{Conditional Independence.} $(X^{(1)}, \ldots, X^{(m)}) \indep Y \mid X$ if there is a response variable $Y$. This property is guaranteed if the $X^{(i)}$ are constructed without looking at $Y$.
 \end{defn}
-Here, the two conditions are analogous to the ones presented in Definition 3.1 of \cite{panning}. In fact, the second condition is identical, while the first only seeks to generalize the idea of pairwise exchangeability.
+Here, the two conditions are analogous to the ones presented in Definition 3.1 of \cite{panning}, which was restated in \Cref{knockdef}. In fact, the second condition is identical, while the first only seeks to generalize the idea of pairwise exchangeability.
 
 \section{Exchangeability of Null Covariates and Knockoffs}
 First, we provide a generalization of Lemma 3.2 in \cite{panning}. In particular, we extend the proof that we can permute null covariates with their knockoffs without changing the joint distribution of $X$ and the knockoffs $X^{(i)}$, conditional on $Y$.
-\todo[inline]{omitted detail with rows, add in here?}
 \begin{lem}
 \label{lemma2.3}
-Let $S \subseteq \mathcal{H}_0$ be a subset of nulls. Consider a set of permutations $\sigma_j : [[ n ]] \to [[ n ]]$ such that if $j \not \in S$, then $\sigma_j = \on{id}_{[[ n ]]}$. Then,
-\[(X^{(0)}, \ldots, X^{(n)}) \mid Y \overset{d}= \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right) \mid Y. \]
+Let $S \subseteq \mathcal{H}_0$ be a subset of nulls. Consider a set of permutations $\sigma_j : [[ m ]] \to [[ m ]]$ such that if $j \not \in S$, then $\sigma_j = \on{id}_{[[ m ]]}$. Then,
+\[(X^{(0)}, \ldots, X^{(m)}) \mid Y \overset{d}= \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(m)} \right) \mid Y. \]
 \end{lem}
 \begin{proof}
-The proof is quite similar to that of the original lemma. Without loss of generality, we can assume that $S = \{ 1, \ldots, m \}$. Then, since the marginal distribution of $Y$ is the same on both sides of the equation, it is equivalent to show that the joint distributions are the same. Then, in the same way as the original lemma, by the exchangeability condition that \[ (X^{(0)}, \ldots, X^{(n)}) \overset{d}= \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right),\] so the only thing we need to show is that 
+The proof is quite similar to that of the original lemma. Without loss of generality, we can assume that $S = \{ 1, \ldots, M \}$. Then, since the marginal distribution of $Y$ is the same on both sides of the equation, it is equivalent to show that the joint distributions are the same. Then, in the same way as the original lemma, by the exchangeability condition that \[ (X^{(0)}, \ldots, X^{(m)}) \overset{d}= \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(m)}) \right),\] so the only thing we need to show is that 
 \begin{equation}
-Y \mid (X^{(0)}, \ldots, X^{(n)}) \overset{d}= Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right).
+Y \mid (X^{(0)}, \ldots, X^{(m)}) \overset{d}= Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(m)}) \right).
 \end{equation}
 To see this, let $p_{Y \mid X}(y|x)$ be the conditional distribution of $Y$ given $X$. Then, note that
 \begin{align*}
-p_{Y \mid \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(n)} \right)}(y | (x^{(0)}, \ldots , x^{(n)})) &= p_{Y \mid (X^{(0)}, \ldots, X^{(n)})} (y| \{ \sigma_i\inv \}_{i=1}^p (x^{(0)}, \ldots, x^{(n)}) ) \\
+p_{Y \mid \{ \sigma_i \}_{i=1}^p \left( X^{(0)}, \ldots, X^{(m)} \right)}(y | (x^{(0)}, \ldots , x^{(m)})) &= p_{Y \mid (X^{(0)}, \ldots, X^{(m)})} (y| \{ \sigma_i\inv \}_{i=1}^p (x^{(0)}, \ldots, x^{(m)}) ) \\
 &= p_{Y \mid X^{(0)}} (y| x'),
 \end{align*}
-where $x_i' = x^{(\sigma_i\inv(0))}_i$ if $i \in S$ and $x_i' = x_i$ otherwise. In particular, the second equality above comes from the fact that $Y$ is conditionally independent of the knockoffs $(X^{(1)}, \ldots, X^{(n)})$ given $X$ by definition of multiple knockoffs.
+where $x_i' = x^{(\sigma_i\inv(0))}_i$ if $i \in S$ and $x_i' = x_i$ otherwise. In particular, the second equality above comes from the fact that $Y$ is conditionally independent of the knockoffs $(X^{(1)}, \ldots, X^{(m)})$ given $X$ by definition of multiple knockoffs.
 
-Next, note that we assumed earlier that $S = \{ 1, \ldots, m \}$ is the subset of nulls. Then, by definition, $Y$ and $X_1$ will be conditionally independent given $X_{2 : p}$, we may further simplify that
+Next, note that we assumed earlier that $S = \{ 1, \ldots, M \}$ is the subset of nulls. Then, by definition, $Y$ and $X_1$ will be conditionally independent given $X_{2 : p}$, we may further simplify that
 \begin{align*}
 p_{Y \mid X^{(0)}} (y| x') &= p_{Y \mid X^{(0)}_{1 : p}} (y | x^{(\sigma_1\inv(0))}_1, x'_{2 : p}) = p_{Y \mid X^{(0)}_{2 : p}} (y | x'_{2 : p}) = p_{Y \mid X^{(0)}_{1 : p}} (y | x_1^{(0)}, x'_{2 : p})
 \end{align*}
 This shows that the conditional distributions of $Y$ are the same:
-\[ Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right) = Y \mid \{ \sigma_i' \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(n)}) \right), \] where $\sigma_1' = \on{id}_{[[n]]}$ and $\sigma_i' = \sigma_i$ for $i  > 1$. This reduces $S$ to the case where $1 \not \in S$, so we may repeat this argument until $S$ is empty, and this proves the claim.
+\[ Y \mid \{ \sigma_i \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(m)}) \right) = Y \mid \{ \sigma_i' \}_{i=1}^p \left( (X^{(0)}, \ldots, X^{(m)}) \right), \] where $\sigma_1' = \on{id}_{[[m]]}$ and $\sigma_i' = \sigma_i$ for $i  > 1$. This reduces $S$ to the case where $1 \not \in S$, so we may repeat this argument until $S$ is empty, and this proves the claim.
 \end{proof}
 
 \section{Feature Statistics and \texorpdfstring{$p$}{p}-values}
@@ -280,11 +383,11 @@ where $f_j$ is an anti-symmetric function.
 
 In the case of multiple knockoffs, instead of thinking about $W_j$, we will consider $Z_j^{(i)}$ for each knockoff $i$ and retaining the convention that the case of $i = 0$ is the statistic corresponding to the original covariate. As such, we can generalize the definition of the statistic $T$ to become
 \begin{equation}
-T \overset{\on{def}}{=} (Z^{(0)},\ldots, Z^{(n)}) = t([X^{(0)}, \ldots, X^{(n)}], y)
+T \overset{\on{def}}{=} (Z^{(0)},\ldots, Z^{(m)}) = t([X^{(0)}, \ldots, X^{(m)}], y)
 \end{equation}
 Here, the $Z^{(k)}_j$ are intended to measure the significance of the covariate (or knockoff) $X^{(k})_j$. 
 
-Now, we must consider the other critical component to the knockoff procedure: the magnitude of $W_j$, which determines the order in which we look at the covariates in the sequential selection procedure. Here, similar to the choice of anti-symmetric function we make for $f_j(Z_j, \tilde{Z}_j) = W_j$ in the original knockoffs case, a choice must be made to determine the ``magnitude'' of the statistic, denoted $M_j$, which can also write as $g_j(Z^{(0)}_j,\ldots, Z^{(n)_j})$. In addition, noting that $f_j$ is anti-symmetric in the original case, we will require that $g_j$ is a symmetric function in its arguments (the analog here is that the magnitude of $f_j$ would be symmetric). 
+Now, we must consider the other critical component to the knockoff procedure: the magnitude of $W_j$, which determines the order in which we look at the covariates in the sequential selection procedure. Here, similar to the choice of anti-symmetric function we make for $f_j(Z_j, \tilde{Z}_j) = W_j$ in the original knockoffs case, a choice must be made to determine the ``magnitude'' of the statistic, denoted $M_j$, which can also write as $g_j(Z^{(0)}_j,\ldots, Z^{(m)_j})$. In addition, noting that $f_j$ is anti-symmetric in the original case, we will require that $g_j$ is a symmetric function in its arguments (the analog here is that the magnitude of $f_j$ would be symmetric). 
 
 
 Now, we present a lemma which is the desired generalization of Lemma 3.3 in \cite{panning}.
@@ -292,16 +395,16 @@ Now, we present a lemma which is the desired generalization of Lemma 3.3 in \cit
 \label{lemma2.4}
 For the null $X_j$, where $j \in \mathcal{H}_0$, let $A_{j, (i)}$ denote the $i$-th order statistic of $Z_j^{(0)}, \ldots, Z_j^{(n)}$. Then, conditional on $(M_1, \ldots, M_p)$,
 \begin{equation}
-\mathbb{P}\left(Z_j^{(0)} = A_{j, (i)} \right) = \frac{1}{n+1}, \qquad 1 \leq i \leq n + 1.
+\mathbb{P}\left(Z_j^{(0)} = A_{j, (i)} \right) = \frac{1}{m+1}, \qquad 1 \leq i \leq m + 1.
 \end{equation}
+Furthermore, the distribution of the ordering of the $Z_j^{(i)}$ will be uniform over all permutations.
 \end{lem}
 \begin{proof}
-\todo[inline]{slightly confused here}
 Like Lemma 3.3 in \cite{panning}, this is a direct consequence of \hyperref[lemma2.3]{\Cref{lemma2.3}}, and we will provide an analogous proof. From the lemma, we may deduce that $T \overset{d}{=} \{ \sigma_i \}_{i=1}^p \left( T \right)$ where the $\sigma_i$ satisfy the condition of the lemma (ie. are non-trivial only for null $j$). Then, by symmetry, the statistic $Z_j^{(0)}$ must be equally likely to be $i$-th largest statistic among the $Z_j^{(i)}$, as desired.
 \end{proof}
 The above lemma allows us to obtain the analogous version of $p$-values for multiple knockoffs. Using the same notation as in \hyperref[lemma2.4]{\Cref{lemma2.4}} for the covariate $X_j$, we define the $p$-value
 \begin{equation}
-p_j = 1 - \frac{i - 1}{n+1}, \qquad Z_j^{(0)} = A_{j, (i)}.
+p_j = 1 - \frac{i - 1}{m+1}, \qquad Z_j^{(0)} = A_{j, (i)}.
 \end{equation}
 Note that the special case where $n = 1$ simplifies directly into the original knockoffs framework.
 
@@ -320,7 +423,28 @@ The proof of the theorem above follows from Theorem 3 of \cite{knockoffs}. In pa
 \end{proof}
 A noteworthy difference between multiple knockoffs and knockoffs is the addition of the cutoff parameter $c$ for $p$-values. Indeed, since knockoffs only using extremely rough 1-bit $p$-values, a choice for $c$ in the SSTP is not particularly enlightening. In particular, selecting any $c \in (1/2, 1)$ is strictly worse than selecting $c = 1/2$, whereas selecting $c \in (0, 1/2)$ leads to zero power; it is evident that the choice $c = 1/2$ is optimal.
 
-For multiple knockoffs, however, there is no canonical choice for $c$ in the SSTP description. For instance, consider the case where $n = 2$. Then, two candidates for $c$ exist: $1/3$ and $2/3$ are both possible. Later, we will investigate the effects of choosing different $c$ on the power of the procedure in various situations for different $n$. 
+For multiple knockoffs, however, there is no canonical choice for $c$ in the SSTP description. For instance, consider the case where $n = 2$. Then, two candidates for $c$ exist: $1/3$ and $2/3$ are both possible. Later, we will investigate the effects of choosing different $c$ on the power of the procedure in various situations for different $n$.
+
+\section{Constructing Multiple Knockoffs}
+\subsection{An Exact Construction}
+\todo{fill this in, not really the focus}
+
+
+\subsection{The Gaussian Case}
+Here, we will provide a generalization of the construction of Gaussian (or second-order) model-X knockoffs. In particular, suppose $X \sim \N(0, \Sigma)$. Then, the distribution of $(X, X^{(1)}, \ldots, X^{(m)})$ can be described by
+\[ (X, X^{(1)}, \ldots, X^{(m)}) \sim \N\left( 0, \begin{bmatrix}
+	\Sigma & (\Sigma - \on{diag}\{ s \})_{1 \times m} \\
+	(\Sigma - \on{diag}\{ s \})_{m \times 1} & \Sigma_{m \times m} - \on{diag}\{ s \}_{\on{diag} m \times m}
+\end{bmatrix}\right) \] where the notation $A_{m \times n}$ denotes the matrix $A$ being repeated in an $m \times n$ block matrix fashion, and $A_{\on{diag}{m \times m}}$ denotes the matrix $A$ being repeated in $m \times m$ diagonal block matrix fashion. From here, we can get the conditional distribution of the knockoffs $(X^{(1)}, \ldots, X^{(m)})$ in the same fashion as before: we can write
+\[ (X^{(1)}, \ldots, X^{(m)}) \mid X \sim \N(\mu, V) \] where the mean and variance are given by
+\begin{align*}
+\mu &= (\Sigma - \on{diag}\{ s \})_{m \times 1} \Sigma\inv X = (X - \on{diag}\{s \} \Sigma\inv X)_{m \times 1}, \\
+V &= (\on{diag}\{s\} - \on{diag}\{s\}\Sigma\inv \on{diag}\{s\})_{m \times m} + \on{diag}\{s\}_{\on{diag} m \times m}.
+\end{align*}
+
+
+
+\chapter{}
 
 \bibliographystyle{alpha}
 \bibliography{sources}
